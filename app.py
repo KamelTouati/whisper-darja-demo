@@ -112,6 +112,7 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
             stderr=subprocess.DEVNULL,
             check=True
         )
+        # pyrefly: ignore [missing-import]
         import soundfile as sf
         samples, _ = sf.read(out_path, dtype="float32")
         
