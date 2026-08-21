@@ -1,0 +1,9 @@
+streamlit>=1.32.0
+streamlit-mic-recorder>=0.0.8
+torch>=2.1.0
+torchaudio
+transformers>=4.38.0
+peft>=0.9.0
+librosa>=0.10.0
+soundfile>=0.12.0
+numpy

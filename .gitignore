@@ -1,0 +1,33 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary audio files
+*.wav
+*.mp3
+*.ogg
+*.m4a
+*.flac
+temp_audio.*
+
+# Training artifacts / logs
+logs
+logs/
+checkpoint-*/
+runs/
+wandb/
+.cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
