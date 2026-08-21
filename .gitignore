@@ -12,6 +12,7 @@ __pycache__/
 temp_audio.*
 
 # Training artifacts / logs
+train_sequential.py
 logs
 logs/
 checkpoint-*/
