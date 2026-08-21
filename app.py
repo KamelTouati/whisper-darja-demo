@@ -147,6 +147,66 @@ with tab_upload:
         audio_bytes = uploaded_file.read()
         audio_source_label = f"Uploaded File: {uploaded_file.name}"
 
+def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
+    """
+    Decodes audio bytes of any format (WebM, OGG/Opus, MP3, WAV, M4A, FLAC)
+    into a 16000Hz mono float32 numpy array.
+    """
+    # Method 1: pydub (leverages ffmpeg)
+    try:
+        from pydub import AudioSegment
+        seg = AudioSegment.from_file(io.BytesIO(audio_bytes))
+        seg = seg.set_frame_rate(16000).set_channels(1)
+        samples = np.array(seg.get_array_of_samples(), dtype=np.float32)
+        if seg.sample_width == 2:
+            samples /= 32768.0
+        elif seg.sample_width == 4:
+            samples /= 2147483648.0
+        elif seg.sample_width == 1:
+            samples = (samples - 128) / 128.0
+        if len(samples) > 0:
+            return samples
+    except Exception:
+        pass
+
+    # Method 2: Direct ffmpeg subprocess
+    try:
+        with tempfile.NamedTemporaryFile(delete=False) as in_tmp:
+            in_tmp.write(audio_bytes)
+            in_path = in_tmp.name
+        out_path = in_path + "_converted.wav"
+        
+        import subprocess
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", in_path, "-ar", "16000", "-ac", "1", "-c:a", "pcm_s16le", out_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True
+        )
+        import soundfile as sf
+        samples, _ = sf.read(out_path, dtype="float32")
+        
+        if os.path.exists(in_path):
+            os.remove(in_path)
+        if os.path.exists(out_path):
+            os.remove(out_path)
+        if len(samples) > 0:
+            return samples
+    except Exception:
+        pass
+
+    # Method 3: Direct soundfile in-memory read
+    try:
+        import soundfile as sf
+        samples, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32")
+        if samples.ndim > 1:
+            samples = np.mean(samples, axis=1)
+        if sr != 16000:
+            samples = librosa.resample(samples, orig_sr=sr, target_sr=16000)
+        return samples
+    except Exception as e:
+        raise RuntimeError(f"Audio decoding error: {e}. Please ensure valid audio data is recorded/uploaded.")
+
 # --- Processing & Output ---
 if audio_bytes:
     st.divider()
@@ -160,51 +220,48 @@ if audio_bytes:
     if st.button("🚀 Transcribe Audio (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
         with st.spinner("⏳ Transcribing speech in Algerian Darja..."):
             try:
-                # Save to temporary file for librosa loading
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp_file:
-                    tmp_file.write(audio_bytes)
-                    tmp_path = tmp_file.name
+                # Robustly decode audio (WebM, Opus, MP3, WAV, etc.) to 16kHz mono float32
+                audio_array = decode_audio_bytes(audio_bytes)
 
-                # Load at 16kHz
-                audio_array, sr = librosa.load(tmp_path, sr=16000)
-                os.remove(tmp_path)
+                if len(audio_array) == 0:
+                    st.warning("Recorded audio is empty. Please try recording again.")
+                else:
+                    # Process features
+                    input_features = processor(
+                        audio_array,
+                        sampling_rate=16000,
+                        return_tensors="pt"
+                    ).input_features
 
-                # Process features
-                input_features = processor(
-                    audio_array,
-                    sampling_rate=16000,
-                    return_tensors="pt"
-                ).input_features
-
-                forced_decoder_ids = processor.get_decoder_prompt_ids(
-                    language="arabic",
-                    task="transcribe"
-                )
-
-                with torch.no_grad():
-                    predicted_ids = model.generate(
-                        input_features,
-                        forced_decoder_ids=forced_decoder_ids,
-                        max_new_tokens=225
+                    forced_decoder_ids = processor.get_decoder_prompt_ids(
+                        language="arabic",
+                        task="transcribe"
                     )
 
-                raw_transcription = processor.batch_decode(
-                    predicted_ids,
-                    skip_special_tokens=True
-                )[0]
+                    with torch.no_grad():
+                        predicted_ids = model.generate(
+                            input_features,
+                            forced_decoder_ids=forced_decoder_ids,
+                            max_new_tokens=225
+                        )
 
-                final_text = normalize_darja(raw_transcription) if apply_norm else raw_transcription
+                    raw_transcription = processor.batch_decode(
+                        predicted_ids,
+                        skip_special_tokens=True
+                    )[0]
 
-                # Display Results
-                st.success("✅ Transcription Complete!")
-                st.markdown(f'<div class="darja-output">{final_text}</div>', unsafe_allow_html=True)
-                
-                # Copy friendly display & Stats
-                st.text_area("Text Output (for easy copy):", value=final_text, height=90)
-                
-                word_count = len(final_text.split())
-                char_count = len(final_text)
-                st.caption(f"Audio Duration: {len(audio_array)/16000:.2f}s | Words: {word_count} | Characters: {char_count}")
+                    final_text = normalize_darja(raw_transcription) if apply_norm else raw_transcription
+
+                    # Display Results
+                    st.success("✅ Transcription Complete!")
+                    st.markdown(f'<div class="darja-output">{final_text}</div>', unsafe_allow_html=True)
+                    
+                    # Copy friendly display & Stats
+                    st.text_area("Text Output (for easy copy):", value=final_text, height=90)
+                    
+                    word_count = len(final_text.split())
+                    char_count = len(final_text)
+                    st.caption(f"Audio Duration: {len(audio_array)/16000:.2f}s | Words: {word_count} | Characters: {char_count}")
 
             except Exception as e:
                 st.error(f"Error processing audio: {str(e)}")
