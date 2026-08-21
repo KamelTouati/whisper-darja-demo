@@ -13,7 +13,6 @@ from streamlit_mic_recorder import mic_recorder
 # --- Page Configuration ---
 st.set_page_config(
     page_title="Whisper Small — Algerian Darja ASR",
-    page_icon="🎙️",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -96,12 +95,12 @@ def load_asr_model():
 processor, model = load_asr_model()
 
 # --- Header ---
-st.markdown('<div class="main-title">🎙️ Whisper Small — Algerian Darja ASR</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">Whisper Small — Algerian Darja ASR</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">التعرف الآلي على الكلام بالدارجة الجزائرية</div>', unsafe_allow_html=True)
 
 # --- Sidebar ---
 with st.sidebar:
-    st.header("📌 Model Information")
+    st.header("Model Information")
     st.markdown("""
     - **Base Model**: `openai/whisper-small`
     - **Adapter ID**: [`touati-kamel/whisper-algerian-darja-small`](https://huggingface.co/touati-kamel/whisper-algerian-darja-small)
@@ -109,7 +108,7 @@ with st.sidebar:
     - **Language**: Algerian Arabic (*Darja / الدارجة*)
     """)
     
-    st.subheader("📊 Benchmark WER")
+    st.subheader("Benchmark WER")
     st.markdown("""
     | Dataset | WER (%) |
     | :--- | :---: |
@@ -121,7 +120,7 @@ with st.sidebar:
     st.info("Trained sequentially over the OddAdmix Algerian speech collection.")
 
 # --- Audio Input Tabs ---
-tab_mic, tab_upload = st.tabs(["🎤 Record Microphone", "📁 Upload Audio File"])
+tab_mic, tab_upload = st.tabs(["Record Microphone", "Upload Audio File"])
 
 audio_bytes = None
 audio_source_label = ""
@@ -129,8 +128,8 @@ audio_source_label = ""
 with tab_mic:
     st.write("Click the button below to record your voice in Algerian Darja:")
     recorded_audio = mic_recorder(
-        start_prompt="🔴 Start Recording",
-        stop_prompt="⏹️ Stop Recording",
+        start_prompt="Start Recording",
+        stop_prompt="Stop Recording",
         key="darja_mic_recorder",
         use_container_width=True
     )
@@ -210,15 +209,15 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
 # --- Processing & Output ---
 if audio_bytes:
     st.divider()
-    st.subheader("🔊 Audio Preview")
+    st.subheader("Audio Preview")
     st.audio(audio_bytes)
     
     col1, col2 = st.columns([2, 1])
     with col1:
         apply_norm = st.checkbox("Apply Darja Text Normalization (تطبيق التنظيف الإملائي)", value=True)
     
-    if st.button("🚀 Transcribe Audio (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
-        with st.spinner("⏳ Transcribing speech in Algerian Darja..."):
+    if st.button("Transcribe Audio (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
+        with st.spinner("Transcribing speech in Algerian Darja..."):
             try:
                 # Robustly decode audio (WebM, Opus, MP3, WAV, etc.) to 16kHz mono float32
                 audio_array = decode_audio_bytes(audio_bytes)
@@ -253,7 +252,7 @@ if audio_bytes:
                     final_text = normalize_darja(raw_transcription) if apply_norm else raw_transcription
 
                     # Display Results
-                    st.success("✅ Transcription Complete!")
+                    st.success("Transcription Complete")
                     st.markdown(f'<div class="darja-output">{final_text}</div>', unsafe_allow_html=True)
                     
                     # Copy friendly display & Stats
