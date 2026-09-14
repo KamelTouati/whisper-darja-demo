@@ -1,8 +1,13 @@
+%&xelatex
 \documentclass[11pt,a4paper]{article}
 
-% --- Core Packages ---
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+% --- Core Packages & Multilingual Arabic Support ---
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{english}
+\setotherlanguage{arabic}
+\newfontfamily\arabicfont[Script=Arabic]{Amiri}
+
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
@@ -55,7 +60,7 @@ Automatic Speech Recognition (ASR) for colloquial Arabic dialects, particularly 
 \section{Introduction}
 \label{sec:introduction}
 
-Arabic is characterized by a profound diglossic landscape, where Modern Standard Arabic (MSA) serves as the formal written medium across education, administration, and formal news broadcasting, while regional vernaculars (dialects) are spoken natively in day-to-day communication. Among the dialectal landscape, Maghrebi Arabic---and specifically \textbf{Algerian Arabic (Darja / الدارجة الجزائرية)}---presents some of the steepest acoustic and linguistic challenges for Automatic Speech Recognition (ASR). 
+Arabic is characterized by a profound diglossic landscape, where Modern Standard Arabic (MSA) serves as the formal written medium across education, administration, and formal news broadcasting, while regional vernaculars (dialects) are spoken natively in day-to-day communication. Among the dialectal landscape, Maghrebi Arabic---and specifically \textbf{Algerian Arabic (Darja / \textarabic{الدارجة الجزائرية})}---presents some of the steepest acoustic and linguistic challenges for Automatic Speech Recognition (ASR). 
 
 Unlike Levantine or Gulf dialects, Algerian Darja incorporates substantial substrate influences from Tamazight (Berber), extensive lexical borrowing from French due to historical contact, and widespread intra-sentential code-switching. Phonologically, Darja exhibits vowel reduction, short vowel deletion (causing complex consonant clusters at syllable onsets), and non-standard consonant shifts that diverge sharply from classical phonetics. Moreover, Darja lacks an official standardized orthography; speakers transcribe phonetically in Arabic script using divergent spelling conventions.
 
@@ -129,8 +134,8 @@ To ensure robust training, audio and text modalities undergo rigorous pipeline n
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Annotation Removal}: Strip French transcription tags (\texttt{[French: ...]}, \texttt{[FR: ...]}) and non-speech bracketed tokens (\texttt{[...]}, \texttt{<...>}).
     \item \textbf{Diacritic \& Tatweel Removal}: Strip all Arabic short vowels/diacritics (\textit{Tashkeel}: \texttt{\textbackslash u064B}--\texttt{\textbackslash u0652}, \texttt{\textbackslash u0670}) and Kashida elongation (\texttt{\textbackslash u0640}).
-    \item \textbf{Letter Standardization}: Normalize all Hamza forms onto bare Alef ($\text{\textit{إ, أ, آ}} \rightarrow \text{\textit{ا}}$), and map Alef Maksura to Yaa ($\text{\textit{ى}} \rightarrow \text{\textit{ي}}$).
-    \item \textbf{Punctuation \& Whitespace}: Strip standard Latin and Arabic punctuation marks (\textit{،, ؛, ؟, «, »}) and collapse multiple whitespaces.
+    \item \textbf{Letter Standardization}: Normalize all Hamza forms onto bare Alef (\textarabic{إ، أ، آ} $\rightarrow$ \textarabic{ا}), and map Alef Maksura to Yaa (\textarabic{ى} $\rightarrow$ \textarabic{ي}).
+    \item \textbf{Punctuation \& Whitespace}: Strip standard Latin and Arabic punctuation marks (\textarabic{،} \textarabic{؛} \textarabic{؟} « ») and collapse multiple whitespaces.
 \end{enumerate}
 
 \section{Methodology}
@@ -318,13 +323,13 @@ Table~\ref{tab:qualitative_examples} illustrates representative transcription ou
 \toprule
 \textbf{Category} & \textbf{Audio Transcript / Model Outputs} \\
 \midrule
-\textbf{Reference Audio} & \textit{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \\
-\textbf{Whisper Small} & \textit{قالوا بلي راه جاي غدا الصباح مع أصحابه كاملين} (MSA substitution error) \\
-\textbf{Whisper Medium} & \textit{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} (\textbf{Exact match}) \\
+\textbf{Reference Audio} & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \\
+\textbf{Whisper Small} & \textarabic{قالوا بلي راه جاي غدا الصباح مع أصحابه كاملين} (MSA substitution error) \\
+\textbf{Whisper Medium} & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} (\textbf{Exact match}) \\
 \midrule
-\textbf{Reference Audio (Code-Switched)} & \textit{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \\
-\textbf{Whisper Small} & \textit{درنا اجتماع على جال بروجي جديد داتاسيت} (Preposition deletion) \\
-\textbf{Whisper Medium} & \textit{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} (\textbf{Exact match}) \\
+\textbf{Reference Audio (Code-Switched)} & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \\
+\textbf{Whisper Small} & \textarabic{درنا اجتماع على جال بروجي جديد داتاسيت} (Preposition deletion) \\
+\textbf{Whisper Medium} & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} (\textbf{Exact match}) \\
 \bottomrule
 \end{tabularx}
 \end{table}
