@@ -1,7 +1,9 @@
 import io
 import os
+import time
 import string
 import tempfile
+import difflib
 import streamlit as st
 import torch
 import librosa
@@ -12,9 +14,9 @@ from streamlit_mic_recorder import mic_recorder
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="Whisper Algerian Darja ASR",
+    page_title="Whisper Algerian Darja ASR — Small vs. Medium",
     page_icon="🎙️",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -22,41 +24,100 @@ st.set_page_config(
 st.markdown("""
 <style>
     .main-title {
-        font-size: 2.2rem;
-        font-weight: 700;
+        font-size: 2.3rem;
+        font-weight: 800;
         margin-bottom: 0.2rem;
         text-align: center;
-        background: linear-gradient(90deg, #1d8cf8, #3358f4);
+        background: linear-gradient(135deg, #1d8cf8 0%, #3358f4 50%, #00b4d8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     .sub-title {
         font-size: 1.15rem;
-        color: #6c757d;
+        color: #64748b;
         text-align: center;
         margin-bottom: 1.5rem;
         direction: rtl;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    .darja-output {
+    .model-card-medium {
+        background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+        border: 1px solid #86efac;
+        border-radius: 12px;
+        padding: 1.2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+    }
+    .model-card-small {
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 1.2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+    }
+    .darja-output-medium {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        font-size: 1.45rem;
+        font-size: 1.35rem;
         line-height: 1.9;
         direction: rtl;
         text-align: right;
-        background-color: #f8f9fa;
-        color: #111827;
-        padding: 1.3rem;
-        border-radius: 12px;
+        background-color: #f0fdf4;
+        color: #14532d;
+        padding: 1.1rem;
+        border-radius: 10px;
+        border: 1px solid #bbf7d0;
+        min-height: 110px;
+    }
+    .darja-output-small {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 1.35rem;
+        line-height: 1.9;
+        direction: rtl;
+        text-align: right;
+        background-color: #f8fafc;
+        color: #1e293b;
+        padding: 1.1rem;
+        border-radius: 10px;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        margin-top: 1rem;
+        min-height: 110px;
+    }
+    .badge-medium {
+        display: inline-block;
+        padding: 3px 10px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border-radius: 9999px;
+        background-color: #dcfce7;
+        color: #15803d;
+        margin-bottom: 8px;
+    }
+    .badge-small {
+        display: inline-block;
+        padding: 3px 10px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border-radius: 9999px;
+        background-color: #e2e8f0;
+        color: #334155;
+        margin-bottom: 8px;
+    }
+    .diff-box {
+        background-color: #fffbeb;
+        border: 1px solid #fef3c7;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+        color: #92400e;
+        direction: rtl;
+        text-align: right;
+        margin-top: 0.8rem;
     }
     .stButton>button {
         width: 100%;
         border-radius: 8px;
-        font-weight: 600;
-        height: 3rem;
+        font-weight: 700;
+        height: 3.2rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -81,7 +142,7 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
     Decodes audio bytes of any format (WebM, OGG/Opus, MP3, WAV, M4A, FLAC)
     into a 16000Hz mono float32 numpy array.
     """
-    # Method 1: pydub (leverages ffmpeg)
+    # Method 1: pydub
     try:
         from pydub import AudioSegment
         seg = AudioSegment.from_file(io.BytesIO(audio_bytes))
@@ -134,100 +195,147 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
             samples = librosa.resample(samples, orig_sr=sr, target_sr=16000)
         return samples
     except Exception as e:
-        raise RuntimeError(f"Audio decoding error: {e}. Please ensure valid audio data is recorded/uploaded.")
+        raise RuntimeError(f"Audio decoding error: {e}. Please ensure valid audio data is recorded or uploaded.")
 
-# --- Models Configuration ---
-MODELS_CATALOG = {
-    "Whisper Medium (Recommended — 0.34% WER)": {
+# --- Model Definitions ---
+MODELS_INFO = {
+    "medium": {
+        "title": "Whisper Medium (833M)",
         "base_model": "openai/whisper-medium",
         "adapter_id": "touati-kamel/whisper-algerian-darja-medium",
-        "params": "833M (69.2M LoRA)",
-        "wer_table": {
-            "Loubna Stories": "0.34%",
-            "Kahwa Podcast": "0.68%",
-            "Rawi Storytelling": "0.95%"
-        }
+        "params": "833M total (69.2M LoRA)",
+        "badge_class": "badge-medium",
+        "badge_text": "⭐ SOTA — Best WER: 0.34%",
+        "card_class": "model-card-medium",
+        "output_class": "darja-output-medium",
+        "wer": {"Loubna Stories": "0.34%", "Kahwa Podcast": "0.68%", "Rawi Stories": "0.95%"}
     },
-    "Whisper Small (Baseline — 14.87% WER)": {
+    "small": {
+        "title": "Whisper Small (267M)",
         "base_model": "openai/whisper-small",
         "adapter_id": "touati-kamel/whisper-algerian-darja-small",
-        "params": "267M (25.9M LoRA)",
-        "wer_table": {
-            "Loubna Stories": "14.87%",
-            "Rawi Storytelling": "27.54%",
-            "Kahwa Podcast": "34.85%"
-        }
+        "params": "267M total (25.9M LoRA)",
+        "badge_class": "badge-small",
+        "badge_text": "⚡ Lightweight — Best WER: 14.87%",
+        "card_class": "model-card-small",
+        "output_class": "darja-output-small",
+        "wer": {"Loubna Stories": "14.87%", "Rawi Stories": "27.54%", "Kahwa Podcast": "34.85%"}
     }
 }
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
 
-# --- Sidebar Controls & Info ---
-with st.sidebar:
-    st.header("⚙️ Model Settings")
-    selected_model_name = st.selectbox(
-        "Choose Whisper Model Version:",
-        options=list(MODELS_CATALOG.keys()),
-        index=0
-    )
-    
-    current_cfg = MODELS_CATALOG[selected_model_name]
-    
-    st.markdown(f"""
-    - **Base Architecture**: `{current_cfg['base_model']}`
-    - **LoRA Adapter**: [{current_cfg['adapter_id']}](https://huggingface.co/{current_cfg['adapter_id']})
-    - **Total Parameters**: {current_cfg['params']}
-    - **Device**: `{DEVICE.upper()}`
-    """)
-    
-    st.subheader("🏆 Benchmark WER")
-    wer_rows = "\n".join([f"| **{k}** | **{v}** |" for k, v in current_cfg["wer_table"].items()])
-    st.markdown(f"""
-    | Dataset Split | WER (%) |
-    | :--- | :---: |
-    {wer_rows}
-    """)
-    
-    st.info("💡 Fine-tuned on the OddAdmix Algerian speech collection using sequential streaming curriculum learning.")
-
-# --- Cached Model Loader ---
-@st.cache_resource(show_spinner="Loading selected Whisper ASR model...")
-def load_asr_model(base_model_id: str, adapter_id: str):
-    processor = WhisperProcessor.from_pretrained(base_model_id, language="arabic", task="transcribe")
+# --- Model Loader (Cached per model) ---
+@st.cache_resource(show_spinner="Loading Whisper Model...")
+def load_whisper_model(model_key: str):
+    info = MODELS_INFO[model_key]
+    processor = WhisperProcessor.from_pretrained(info["base_model"], language="arabic", task="transcribe")
     base_model = WhisperForConditionalGeneration.from_pretrained(
-        base_model_id,
+        info["base_model"],
         torch_dtype=DTYPE,
         device_map="auto" if torch.cuda.is_available() else None,
         low_cpu_mem_usage=True
     )
-    model = PeftModel.from_pretrained(base_model, adapter_id)
+    model = PeftModel.from_pretrained(base_model, info["adapter_id"])
     model.eval()
     return processor, model
 
-processor, model = load_asr_model(current_cfg["base_model"], current_cfg["adapter_id"])
+def run_transcription(model_key: str, audio_array: np.ndarray, apply_norm: bool = True):
+    processor, model = load_whisper_model(model_key)
+    
+    start_time = time.time()
+    input_features = processor(
+        audio_array,
+        sampling_rate=16000,
+        return_tensors="pt"
+    ).input_features
 
-# --- Header ---
-st.markdown('<div class="main-title">Whisper — Algerian Darja ASR</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">التعرف الآلي على الكلام بالدارجة الجزائرية</div>', unsafe_allow_html=True)
+    if torch.cuda.is_available():
+        input_features = input_features.to("cuda", dtype=DTYPE)
+
+    try:
+        forced_decoder_ids = processor.get_decoder_prompt_ids(
+            language="arabic",
+            task="transcribe"
+        )
+    except Exception:
+        forced_decoder_ids = None
+
+    with torch.no_grad():
+        if forced_decoder_ids is not None:
+            predicted_ids = model.generate(
+                input_features,
+                forced_decoder_ids=forced_decoder_ids,
+                max_new_tokens=225
+            )
+        else:
+            predicted_ids = model.generate(
+                input_features,
+                language="arabic",
+                task="transcribe",
+                max_new_tokens=225
+            )
+
+    raw_text = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+    latency = time.time() - start_time
+    
+    final_text = normalize_darja(raw_text) if apply_norm else raw_text
+    return final_text, latency
+
+# --- Sidebar UI ---
+with st.sidebar:
+    st.header("⚙️ Evaluation & Comparison")
+    
+    inference_mode = st.radio(
+        "Select Transcription Mode:",
+        options=[
+            "⚡ Compare Both Models (Side-by-Side)",
+            "🚀 Whisper Medium (Recommended)",
+            "🔹 Whisper Small (Lightweight)"
+        ],
+        index=0
+    )
+    
+    st.markdown("---")
+    st.subheader("📊 Benchmark WER Comparison")
+    st.markdown("""
+    | Dataset Split | Medium (833M) | Small (267M) | Δ Gain |
+    | :--- | :---: | :---: | :---: |
+    | **Loubna Stories** | **0.34%** | 14.87% | **+97.7%** |
+    | **Kahwa Podcast** | **0.68%** | 34.85% | **+98.0%** |
+    | **Rawi Storytelling** | **0.95%** | 27.54% | **+96.5%** |
+    """)
+    
+    st.markdown(f"**Hardware Device**: `{DEVICE.upper()}`")
+    st.markdown("---")
+    st.markdown("""
+    - [Medium Model Card (HF)](https://huggingface.co/touati-kamel/whisper-algerian-darja-medium)
+    - [Small Model Card (HF)](https://huggingface.co/touati-kamel/whisper-algerian-darja-small)
+    - [OddAdmix Speech Collection](https://huggingface.co/oddadmix)
+    """)
+
+# --- Main Page Header ---
+st.markdown('<div class="main-title">Whisper Algerian Darja ASR — Comparison Demo</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">مقارنة التعرف الآلي على الكلام بالدارجة الجزائرية بين النموذجين المتوسط والصغير</div>', unsafe_allow_html=True)
 
 # --- Session State Initialization ---
 if "active_audio" not in st.session_state:
     st.session_state.active_audio = None
-if "transcription_text" not in st.session_state:
-    st.session_state.transcription_text = None
+if "transcription_results" not in st.session_state:
+    st.session_state.transcription_results = {}
 if "audio_duration" not in st.session_state:
     st.session_state.audio_duration = 0.0
 
 # --- Audio Input Tabs ---
-tab_mic, tab_upload = st.tabs(["🎙️ Record Microphone", "📁 Upload Audio File"])
+tab_mic, tab_upload = st.tabs(["🎙️ Record Voice (ميكروفون)", "📁 Upload Audio File (ملف صوتي)"])
 
 with tab_mic:
-    st.write("Click below to record your voice in Algerian Darja:")
+    st.write("Record your voice in Algerian Darja (any dialect):")
     recorded_audio = mic_recorder(
         start_prompt="🔴 Start Recording",
         stop_prompt="⏹️ Stop Recording",
-        key="darja_mic_recorder",
+        key="darja_compare_mic_recorder",
         use_container_width=True
     )
     if recorded_audio and "bytes" in recorded_audio and len(recorded_audio["bytes"]) > 0:
@@ -235,92 +343,148 @@ with tab_mic:
 
 with tab_upload:
     uploaded_file = st.file_uploader(
-        "Upload an audio file (WAV, MP3, OGG, M4A, FLAC):",
+        "Upload an Algerian audio file (WAV, MP3, OGG, M4A, FLAC):",
         type=["wav", "mp3", "ogg", "m4a", "flac"],
-        key="darja_file_uploader"
+        key="darja_compare_file_uploader"
     )
     if uploaded_file is not None:
         st.session_state.active_audio = uploaded_file.read()
 
-# --- Processing & Output ---
+# --- Action & Output Section ---
 if st.session_state.active_audio:
     st.divider()
-    st.subheader("🎧 Audio Playback")
-    st.audio(st.session_state.active_audio)
     
-    col1, col2 = st.columns([2, 1])
-    with col1:
+    col_audio, col_ctrl = st.columns([2, 1])
+    with col_audio:
+        st.subheader("🎧 Audio Input Preview")
+        st.audio(st.session_state.active_audio)
+    
+    with col_ctrl:
+        st.write(" ")
+        st.write(" ")
         apply_norm = st.checkbox("Apply Darja Text Normalization (تنظيف وتوحيد الحروف)", value=True)
-    with col2:
-        if st.button("🗑️ Clear Audio"):
+        if st.button("🗑️ Clear Audio & Results"):
             st.session_state.active_audio = None
-            st.session_state.transcription_text = None
+            st.session_state.transcription_results = {}
+            st.session_state.audio_duration = 0.0
             st.rerun()
-    
-    if st.button("⚡ Transcribe Audio (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
-        with st.spinner(f"Transcribing using {selected_model_name.split(' (')[0]}..."):
-            try:
-                # Decode audio to 16kHz mono float32 array
-                audio_array = decode_audio_bytes(st.session_state.active_audio)
 
-                if len(audio_array) == 0:
-                    st.warning("Recorded/uploaded audio is empty. Please try again.")
+    # Transcribe Button
+    button_label = "⚡ Run Side-by-Side Model Comparison (مقارنة النموذجين معاً)" if "Compare" in inference_mode else "⚡ Transcribe Audio (تحويل الصوت إلى نص)"
+    
+    if st.button(button_label, type="primary", use_container_width=True):
+        st.session_state.transcription_results = {}
+        
+        try:
+            audio_array = decode_audio_bytes(st.session_state.active_audio)
+            
+            if len(audio_array) == 0:
+                st.warning("The input audio is empty. Please record or upload a valid audio sample.")
+            else:
+                st.session_state.audio_duration = len(audio_array) / 16000.0
+                
+                # Determine models to run
+                models_to_run = []
+                if "Compare" in inference_mode:
+                    models_to_run = ["medium", "small"]
+                elif "Medium" in inference_mode:
+                    models_to_run = ["medium"]
                 else:
-                    input_features = processor(
-                        audio_array,
-                        sampling_rate=16000,
-                        return_tensors="pt"
-                    ).input_features
+                    models_to_run = ["small"]
+                
+                progress_text = "Processing audio with Whisper models..."
+                progress_bar = st.progress(0, text=progress_text)
+                
+                for idx, m_key in enumerate(models_to_run):
+                    m_title = MODELS_INFO[m_key]["title"]
+                    progress_bar.progress(
+                        int((idx / len(models_to_run)) * 100),
+                        text=f"Transcribing with {m_title}..."
+                    )
+                    text_out, latency = run_transcription(m_key, audio_array, apply_norm)
+                    st.session_state.transcription_results[m_key] = {
+                        "text": text_out,
+                        "latency": latency
+                    }
+                
+                progress_bar.progress(100, text="Transcription Complete!")
+                time.sleep(0.3)
+                progress_bar.empty()
+                
+        except Exception as e:
+            st.error(f"Error processing audio: {str(e)}")
 
-                    if torch.cuda.is_available():
-                        input_features = input_features.to("cuda", dtype=DTYPE)
-
-                    try:
-                        forced_decoder_ids = processor.get_decoder_prompt_ids(
-                            language="arabic",
-                            task="transcribe"
-                        )
-                    except Exception:
-                        forced_decoder_ids = None
-
-                    with torch.no_grad():
-                        if forced_decoder_ids is not None:
-                            predicted_ids = model.generate(
-                                input_features,
-                                forced_decoder_ids=forced_decoder_ids,
-                                max_new_tokens=225
-                            )
-                        else:
-                            predicted_ids = model.generate(
-                                input_features,
-                                language="arabic",
-                                task="transcribe",
-                                max_new_tokens=225
-                            )
-
-                    raw_transcription = processor.batch_decode(
-                        predicted_ids,
-                        skip_special_tokens=True
-                    )[0]
-
-                    st.session_state.transcription_text = normalize_darja(raw_transcription) if apply_norm else raw_transcription
-                    st.session_state.audio_duration = len(audio_array) / 16000.0
-
-            except Exception as e:
-                st.error(f"Error processing audio: {str(e)}")
-
-# Display Persisted Results
-if st.session_state.transcription_text:
-    st.success("✅ Transcription Complete!")
-    st.markdown(f'<div class="darja-output">{st.session_state.transcription_text}</div>', unsafe_allow_html=True)
+# --- Display Results ---
+results = st.session_state.transcription_results
+if results:
+    st.divider()
+    st.subheader("🎯 Transcription Results & Model Comparison")
     
-    # Text area for easy copy
-    st.text_area("Text Output (for easy copy):", value=st.session_state.transcription_text, height=95)
-    
-    word_count = len(st.session_state.transcription_text.split())
-    char_count = len(st.session_state.transcription_text)
-    st.caption(f"⏱️ Audio Duration: **{st.session_state.audio_duration:.2f}s** | 📝 Words: **{word_count}** | 🔤 Characters: **{char_count}**")
+    if len(results) == 2:
+        col_med, col_sml = st.columns(2)
+        
+        # Whisper Medium Column
+        with col_med:
+            med_res = results.get("medium", {})
+            st.markdown(f"""
+            <div class="{MODELS_INFO['medium']['card_class']}">
+                <span class="{MODELS_INFO['medium']['badge_class']}">{MODELS_INFO['medium']['badge_text']}</span>
+                <h3 style="margin-top:0; color:#14532d;">{MODELS_INFO['medium']['title']}</h3>
+                <div class="{MODELS_INFO['medium']['output_class']}">{med_res.get('text', '')}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.text_area("Medium Output (Copy):", value=med_res.get("text", ""), height=80, key="copy_med")
+            w_med = len(med_res.get("text", "").split())
+            c_med = len(med_res.get("text", ""))
+            st.caption(f"⏱️ Inference Latency: **{med_res.get('latency', 0.0):.2f}s** | Words: **{w_med}** | Chars: **{c_med}**")
+
+        # Whisper Small Column
+        with col_sml:
+            sml_res = results.get("small", {})
+            st.markdown(f"""
+            <div class="{MODELS_INFO['small']['card_class']}">
+                <span class="{MODELS_INFO['small']['badge_class']}">{MODELS_INFO['small']['badge_text']}</span>
+                <h3 style="margin-top:0; color:#1e293b;">{MODELS_INFO['small']['title']}</h3>
+                <div class="{MODELS_INFO['small']['output_class']}">{sml_res.get('text', '')}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.text_area("Small Output (Copy):", value=sml_res.get("text", ""), height=80, key="copy_sml")
+            w_sml = len(sml_res.get("text", "").split())
+            c_sml = len(sml_res.get("text", ""))
+            st.caption(f"⏱️ Inference Latency: **{sml_res.get('latency', 0.0):.2f}s** | Words: **{w_sml}** | Chars: **{c_sml}**")
+        
+        # Text Comparison Difference Summary
+        med_words = med_res.get("text", "").split()
+        sml_words = sml_res.get("text", "").split()
+        matcher = difflib.SequenceMatcher(None, sml_words, med_words)
+        similarity = matcher.ratio() * 100
+        
+        st.markdown(f"""
+        <div class="diff-box">
+            <b>🔍 ملخص المقارنة بين النموذجين:</b><br>
+            • نسبة التطابق النصي بين المخرجات: <b>{similarity:.1f}%</b><br>
+            • يتميز النموذج <b>Medium (833M)</b> بقدرة فائقة على فهم مخارج الحروف الجزائرية وسرعة الكلام والكلمات المركبة بدقة مضاعفة (WER 0.34% مقابل 14.87%).
+        </div>
+        """, unsafe_allow_html=True)
+        
+    else:
+        for m_key, m_res in results.items():
+            info = MODELS_INFO[m_key]
+            st.markdown(f"""
+            <div class="{info['card_class']}">
+                <span class="{info['badge_class']}">{info['badge_text']}</span>
+                <h3 style="margin-top:0;">{info['title']}</h3>
+                <div class="{info['output_class']}">{m_res.get('text', '')}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.text_area(f"{info['title']} Output (Copy):", value=m_res.get("text", ""), height=90, key=f"copy_{m_key}")
+            w_count = len(m_res.get("text", "").split())
+            c_count = len(m_res.get("text", ""))
+            st.caption(f"⏱️ Latency: **{m_res.get('latency', 0.0):.2f}s** | Duration: **{st.session_state.audio_duration:.2f}s** | Words: **{w_count}** | Chars: **{c_count}**")
 
 # --- Footer ---
 st.divider()
-st.caption("Developed by **Kamel Touati** | Powered by OpenAI Whisper, PEFT (LoRA), and Streamlit.")
+st.caption("Developed by **Kamel Touati** | Fine-tuned on OddAdmix Algerian Datasets with PEFT LoRA (QLoRA 4-bit) & Streamlit.")
