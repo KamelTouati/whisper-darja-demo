@@ -55,7 +55,7 @@ Automatic Speech Recognition (ASR) for colloquial Arabic dialects, particularly 
 \section{Introduction}
 \label{sec:introduction}
 
-Arabic is characterized by a profound diglossic landscape, where Modern Standard Arabic (MSA) serves as the formal written medium across education, administration, and formal news broadcasting, while regional vernaculars (dialects) are spoken natively in day-to-day communication. Among the dialectal landscape, Maghrebi Arabic—and specifically **Algerian Arabic (Darja / الدارجة الجزائرية)**—presents some of the steepest acoustic and linguistic challenges for Automatic Speech Recognition (ASR). 
+Arabic is characterized by a profound diglossic landscape, where Modern Standard Arabic (MSA) serves as the formal written medium across education, administration, and formal news broadcasting, while regional vernaculars (dialects) are spoken natively in day-to-day communication. Among the dialectal landscape, Maghrebi Arabic---and specifically \textbf{Algerian Arabic (Darja / الدارجة الجزائرية)}---presents some of the steepest acoustic and linguistic challenges for Automatic Speech Recognition (ASR). 
 
 Unlike Levantine or Gulf dialects, Algerian Darja incorporates substantial substrate influences from Tamazight (Berber), extensive lexical borrowing from French due to historical contact, and widespread intra-sentential code-switching. Phonologically, Darja exhibits vowel reduction, short vowel deletion (causing complex consonant clusters at syllable onsets), and non-standard consonant shifts that diverge sharply from classical phonetics. Moreover, Darja lacks an official standardized orthography; speakers transcribe phonetically in Arabic script using divergent spelling conventions.
 
@@ -63,18 +63,18 @@ Recent breakthroughs in foundation speech models, notably OpenAI's Whisper \cite
 
 Adapting massive speech foundation models to regional dialects introduces two primary bottlenecks:
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Computational & Memory Costs}: Full parameter fine-tuning of large Transformer encoder-decoders (e.g., Whisper Medium with 769M parameters) requires substantial GPU clusters, rendering fine-tuning inaccessible in resource-constrained environments.
-    \item \textbf{Data Ingestion & Storage Constraints}: Large-scale audio datasets decoded onto local disks create severe I/O bottlenecks and storage saturation on commodity and cloud instances.
+    \item \textbf{Computational \& Memory Costs}: Full parameter fine-tuning of large Transformer encoder-decoders (e.g., Whisper Medium with 769M parameters) requires substantial GPU clusters, rendering fine-tuning inaccessible in resource-constrained environments.
+    \item \textbf{Data Ingestion \& Storage Constraints}: Large-scale audio datasets decoded onto local disks create severe I/O bottlenecks and storage saturation on commodity and cloud instances.
 \end{enumerate}
 
-To overcome these limitations, we introduce an end-to-end framework combining **4-bit Quantized Low-Rank Adaptation (QLoRA)** \cite{dettmers2024qlora} with a **sequential streaming curriculum learning pipeline**. We systematically analyze the adaptation of both Whisper Small and Whisper Medium models on the OddAdmix Algerian speech collection. 
+To overcome these limitations, we introduce an end-to-end framework combining \textbf{4-bit Quantized Low-Rank Adaptation (QLoRA)} \cite{dettmers2023qlora} with a \textbf{sequential streaming curriculum learning pipeline}. We systematically analyze the adaptation of both Whisper Small and Whisper Medium models on the OddAdmix Algerian speech collection. 
 
 Our main contributions are summarized as follows:
 \begin{itemize}[leftmargin=*]
     \item \textbf{Parameter-Efficient Dialect Adaptation}: We demonstrate that 4-bit NF4 quantization combined with rank-$64$ LoRA adapters on attention and feed-forward projection layers adapts Whisper models effectively while tuning only 8.31\% of the total parameters (69.21M weights).
     \item \textbf{Zero-Disk Sequential Streaming Curriculum}: We formulate a multi-phase curriculum learning strategy (Conversational $\rightarrow$ Expressive Storytelling $\rightarrow$ Cultural Narratives) trained entirely via on-the-fly streaming from Hugging Face CDN, completely eliminating local disk caching bottlenecks.
     \item \textbf{Empirical Scaling Analysis}: We provide a rigorous comparative study between Whisper Small and Whisper Medium, illustrating that scaling model capacity is essential to resolving acoustic ambiguity and dense code-switching in Maghrebi dialects, achieving over 96\% relative WER reduction.
-    \item \textbf{Standardized Dialect Normalization & Open Resources}: We develop a dialectal Arabic text normalization suite and open-source our fine-tuned model checkpoints, training scripts, and an interactive side-by-side Streamlit evaluation suite.
+    \item \textbf{Standardized Dialect Normalization \& Open Resources}: We develop a dialectal Arabic text normalization suite and open-source our fine-tuned model checkpoints, training scripts, and an interactive side-by-side Streamlit evaluation suite.
 \end{itemize}
 
 \section{Related Work}
@@ -84,15 +84,15 @@ Our main contributions are summarized as follows:
 The paradigm of ASR has shifted from hybrid HMM-DNN pipelines to end-to-end Transformer architectures trained on massive corpora. OpenAI Whisper \cite{radford2022whisper} is trained on 680,000 hours of multi-task, multilingual supervised data, demonstrating robust zero-shot generalization across global languages. Self-supervised speech representations, such as wav2vec 2.0 \cite{baevski2020wav2vec2} and MMS \cite{pratap2023mms}, learn contextualized representations from raw audio waveforms. While these foundation models exhibit remarkable acoustic robustness in high-resource languages, their performance degrades when encountering dialectal vernaculars with sparse representation in pre-training data.
 
 \subsection{Dialectal Arabic Speech Recognition}
-Arabic dialectal speech processing has been widely studied through challenges such as the Multi-Genre Broadcast (MGB-2, MGB-3) \cite{ali2016mgb2}. Recent benchmarks \cite{khurana2023arabic_asr} highlight the performance gap between MSA and spoken dialects like Egyptian, Levantine, and Gulf Arabic. However, Maghrebi Arabic (Algerian, Moroccan, Tunisian) remains significantly under-resourced \cite{menacer2020algerian_corpus, tachicart2021maghrebi}. Distinct phonetic reductions, French-Arabic code-switching, and absence of standardized corpora make Algerian Darja one of the most challenging Arabic speech varieties.
+Arabic dialectal speech processing has been widely studied through challenges such as the Multi-Genre Broadcast (MGB-2, MGB-3) \cite{ali2016mgb2}. Recent studies by Hussein et al. \cite{hussein2021arabic_asr} highlight the substantial performance gap between MSA and spoken vernaculars. However, Maghrebi Arabic (Algerian, Moroccan, Tunisian) remains significantly under-resourced compared to Eastern varieties, as highlighted in parallel corpus and speech studies \cite{meftouh2015padic, tachicart2014moroccan}. Distinct phonetic reductions, French-Arabic code-switching, and absence of standardized corpora make Algerian Darja one of the most challenging Arabic speech varieties.
 
 \subsection{Parameter-Efficient Fine-Tuning (PEFT) and QLoRA}
-Low-Rank Adaptation (LoRA) \cite{hu2021lora} enables efficient parameter adaptation by freezing pre-trained model weights $W_0 \in \mathbb{R}^{d \times k}$ and injecting trainable rank-decomposition matrices $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with $r \ll \min(d, k)$. QLoRA \cite{dettmers2024qlora} further enhances memory efficiency by quantizing base weights into 4-bit NormalFloat (NF4) and introducing double quantization with paged optimizers. While extensively validated on Large Language Models (LLMs), parameter-efficient fine-tuning on speech Transformer architectures is an emerging area of research.
+Low-Rank Adaptation (LoRA) \cite{hu2021lora} enables efficient parameter adaptation by freezing pre-trained model weights $W_0 \in \mathbb{R}^{d \times k}$ and injecting trainable rank-decomposition matrices $B \in \mathbb{R}^{d \times r}$ and $A \in \mathbb{R}^{r \times k}$ with $r \ll \min(d, k)$. QLoRA \cite{dettmers2023qlora} further enhances memory efficiency by quantizing base weights into 4-bit NormalFloat (NF4) and introducing double quantization with paged optimizers. While extensively validated on Large Language Models (LLMs), parameter-efficient fine-tuning on speech Transformer architectures is an emerging area of research.
 
 \section{The Algerian Darja Benchmark}
 \label{sec:dataset}
 
-We leverage the **OddAdmix Algerian Speech Collection**, a rich, multi-speaker corpus representing three authentic acoustic and linguistic domains of Algerian Darja.
+We leverage the \textbf{OddAdmix Algerian Speech Collection}, a rich, multi-speaker corpus representing three authentic acoustic and linguistic domains of Algerian Darja.
 
 \subsection{Domain Subsets}
 The dataset is structured into three progressive splits:
@@ -128,9 +128,9 @@ To ensure robust training, audio and text modalities undergo rigorous pipeline n
 \paragraph{Dialect-Aware Text Harmonization:} Algerian Darja transcription in Arabic script suffers from non-standard orthography. We implement a deterministic normalizer:
 \begin{enumerate}[leftmargin=*]
     \item \textbf{Annotation Removal}: Strip French transcription tags (\texttt{[French: ...]}, \texttt{[FR: ...]}) and non-speech bracketed tokens (\texttt{[...]}, \texttt{<...>}).
-    \item \textbf{Diacritic & Tatweel Removal}: Strip all Arabic short vowels/diacritics (\textit{Tashkeel}: \texttt{\textbackslash u064B}--\texttt{\textbackslash u0652}, \texttt{\textbackslash u0670}) and Kashida elongation (\texttt{\textbackslash u0640}).
+    \item \textbf{Diacritic \& Tatweel Removal}: Strip all Arabic short vowels/diacritics (\textit{Tashkeel}: \texttt{\textbackslash u064B}--\texttt{\textbackslash u0652}, \texttt{\textbackslash u0670}) and Kashida elongation (\texttt{\textbackslash u0640}).
     \item \textbf{Letter Standardization}: Normalize all Hamza forms onto bare Alef ($\text{\textit{إ, أ, آ}} \rightarrow \text{\textit{ا}}$), and map Alef Maksura to Yaa ($\text{\textit{ى}} \rightarrow \text{\textit{ي}}$).
-    \item \textbf{Punctuation & Whitespace}: Strip standard Latin and Arabic punctuation marks (\textit{،, ؛, ؟, «, »}) and collapse multiple whitespaces.
+    \item \textbf{Punctuation \& Whitespace}: Strip standard Latin and Arabic punctuation marks (\textit{،, ؛, ؟, «, »}) and collapse multiple whitespaces.
 \end{enumerate}
 
 \section{Methodology}
@@ -172,7 +172,7 @@ As summarized in Table~\ref{tab:model_params}, parameter adaptation updates only
 \subsection{Zero-Disk Sequential Streaming Curriculum}
 Traditional speech fine-tuning pre-downloads and extracts gigabytes of uncompressed WAV files to disk, creating I/O bottlenecks. We design an on-the-fly streaming pipeline where batches are fetched via HTTP chunks, decoded in RAM, fed into the Mel-spectrogram collator, and immediately garbage-collected.
 
-We structure training as a sequential 3-phase curriculum learning strategy:
+We structure training as a sequential 3-phase curriculum learning strategy \cite{bengio2009curriculum}:
 \begin{equation}
 \mathcal{D}_1 \text{ (Kahwa Podcast)} \longrightarrow \mathcal{D}_2 \text{ (Loubna Stories)} \longrightarrow \mathcal{D}_3 \text{ (Rawi Storytelling)}
 \end{equation}
@@ -270,7 +270,7 @@ Table~\ref{tab:main_results} presents the quantitative comparison between the Wh
 \textbf{Phase 3: Rawi Storytelling} & 27.54\% & \textbf{0.95\%} & \textbf{-96.55\%} \\
 \midrule
 \textbf{Final Cross-Entropy Loss} & 0.2548 & \textbf{0.00612} & \textbf{-97.60\%} \\
-\textbf{Total Optimization Steps} & 15,829 steps & \textbf{31,661 steps} & — \\
+\textbf{Total Optimization Steps} & 15,829 steps & \textbf{31,661 steps} & --- \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -285,7 +285,7 @@ The underlying mechanisms driving this gain include:
 \end{itemize}
 
 \subsection{Curriculum Convergence Analysis}
-As depicted in Figure~\ref{fig:loss_trajectory}, training progress across the 31,661 cumulative steps proceeds with high numerical stability. In Phase 1 (Kahwa), the model establishes baseline colloquial tokenization, dropping initial WER from 43.05\% to 0.68\%. Phase 2 (Loubna) refines syntactic predictions on expressive storytelling, reaching a peak accuracy of 0.34\% WER. Finally, Phase 3 (Rawi) consolidates rare cultural lexicon without catastrophic forgetting, completing with a cross-entropy loss of 0.00612.
+Training progress across the 31,661 cumulative steps proceeds with high numerical stability. In Phase 1 (Kahwa), the model establishes baseline colloquial tokenization, dropping initial WER from 43.05\% to 0.68\%. Phase 2 (Loubna) refines syntactic predictions on expressive storytelling, reaching a peak accuracy of 0.34\% WER. Finally, Phase 3 (Rawi) consolidates rare cultural lexicon without catastrophic forgetting, completing with a cross-entropy loss of 0.00612.
 
 \begin{figure}[t]
 \centering
@@ -298,7 +298,7 @@ As depicted in Figure~\ref{fig:loss_trajectory}, training progress across the 31
 \hfill
 \begin{minipage}{0.48\textwidth}
 \centering
-\framebox[\linewidth]{\parbox{0.9\linewidth}{\centering \vspace{1.5cm} \textbf{Memory & Throughput} \\ 4-bit QLoRA VRAM: 7.2 GB \\ Disk Usage: Flat ($\sim$0 GB cache) \\ Effective Batch: 32 samples \vspace{1.5cm}}}
+\framebox[\linewidth]{\parbox{0.9\linewidth}{\centering \vspace{1.5cm} \textbf{Memory \& Throughput} \\ 4-bit QLoRA VRAM: 7.2 GB \\ Disk Usage: Flat ($\sim$0 GB cache) \\ Effective Batch: 32 samples \vspace{1.5cm}}}
 \caption{Computational and VRAM memory footprint on Tesla T4.}
 \label{fig:memory_profile}
 \end{minipage}
