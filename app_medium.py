@@ -12,7 +12,7 @@ from streamlit_mic_recorder import mic_recorder
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="Whisper Algerian Darja ASR",
+    page_title="Whisper Medium — Algerian Darja ASR",
     page_icon="🎙️",
     layout="centered",
     initial_sidebar_state="expanded"
@@ -51,6 +51,16 @@ st.markdown("""
         border: 1px solid #e2e8f0;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         margin-top: 1rem;
+    }
+    .badge-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        border-radius: 9999px;
+        background-color: #e0f2fe;
+        color: #0369a1;
+        margin-right: 6px;
     }
     .stButton>button {
         width: 100%;
@@ -136,80 +146,53 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
     except Exception as e:
         raise RuntimeError(f"Audio decoding error: {e}. Please ensure valid audio data is recorded/uploaded.")
 
-# --- Models Configuration ---
-MODELS_CATALOG = {
-    "Whisper Medium (Recommended — 0.34% WER)": {
-        "base_model": "openai/whisper-medium",
-        "adapter_id": "touati-kamel/whisper-algerian-darja-medium",
-        "params": "833M (69.2M LoRA)",
-        "wer_table": {
-            "Loubna Stories": "0.34%",
-            "Kahwa Podcast": "0.68%",
-            "Rawi Storytelling": "0.95%"
-        }
-    },
-    "Whisper Small (Baseline — 14.87% WER)": {
-        "base_model": "openai/whisper-small",
-        "adapter_id": "touati-kamel/whisper-algerian-darja-small",
-        "params": "267M (25.9M LoRA)",
-        "wer_table": {
-            "Loubna Stories": "14.87%",
-            "Rawi Storytelling": "27.54%",
-            "Kahwa Podcast": "34.85%"
-        }
-    }
-}
-
+# --- Model Configuration ---
+MODEL_ID = "openai/whisper-medium"
+ADAPTER_ID = "touati-kamel/whisper-algerian-darja-medium"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 DTYPE = torch.float16 if torch.cuda.is_available() else torch.float32
 
-# --- Sidebar Controls & Info ---
-with st.sidebar:
-    st.header("⚙️ Model Settings")
-    selected_model_name = st.selectbox(
-        "Choose Whisper Model Version:",
-        options=list(MODELS_CATALOG.keys()),
-        index=0
-    )
-    
-    current_cfg = MODELS_CATALOG[selected_model_name]
-    
-    st.markdown(f"""
-    - **Base Architecture**: `{current_cfg['base_model']}`
-    - **LoRA Adapter**: [{current_cfg['adapter_id']}](https://huggingface.co/{current_cfg['adapter_id']})
-    - **Total Parameters**: {current_cfg['params']}
-    - **Device**: `{DEVICE.upper()}`
-    """)
-    
-    st.subheader("🏆 Benchmark WER")
-    wer_rows = "\n".join([f"| **{k}** | **{v}** |" for k, v in current_cfg["wer_table"].items()])
-    st.markdown(f"""
-    | Dataset Split | WER (%) |
-    | :--- | :---: |
-    {wer_rows}
-    """)
-    
-    st.info("💡 Fine-tuned on the OddAdmix Algerian speech collection using sequential streaming curriculum learning.")
-
-# --- Cached Model Loader ---
-@st.cache_resource(show_spinner="Loading selected Whisper ASR model...")
-def load_asr_model(base_model_id: str, adapter_id: str):
-    processor = WhisperProcessor.from_pretrained(base_model_id, language="arabic", task="transcribe")
+@st.cache_resource(show_spinner="Loading Whisper Medium Algerian Darja Model (769M Params)...")
+def load_asr_model():
+    processor = WhisperProcessor.from_pretrained(MODEL_ID, language="arabic", task="transcribe")
     base_model = WhisperForConditionalGeneration.from_pretrained(
-        base_model_id,
+        MODEL_ID,
         torch_dtype=DTYPE,
         device_map="auto" if torch.cuda.is_available() else None,
         low_cpu_mem_usage=True
     )
-    model = PeftModel.from_pretrained(base_model, adapter_id)
+    model = PeftModel.from_pretrained(base_model, ADAPTER_ID)
     model.eval()
     return processor, model
 
-processor, model = load_asr_model(current_cfg["base_model"], current_cfg["adapter_id"])
+processor, model = load_asr_model()
 
 # --- Header ---
-st.markdown('<div class="main-title">Whisper — Algerian Darja ASR</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">التعرف الآلي على الكلام بالدارجة الجزائرية</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">Whisper Medium — Algerian Darja ASR</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">التعرف الآلي عالي الدقة على الكلام بالدارجة الجزائرية</div>', unsafe_allow_html=True)
+
+# --- Sidebar ---
+with st.sidebar:
+    st.header("⚙️ Model Specifications")
+    st.markdown("""
+    - **Base Model**: `openai/whisper-medium`
+    - **LoRA Adapter**: [`touati-kamel/whisper-algerian-darja-medium`](https://huggingface.co/touati-kamel/whisper-algerian-darja-medium)
+    - **Parameters**: 833M total (69.2M trainable LoRA)
+    - **Architecture**: 24 Encoder / 24 Decoder layers
+    - **Target Dialect**: Algerian Arabic (*Darja / الدارجة*)
+    - **Device**: `{}`
+    """.format(DEVICE.upper()))
+    
+    st.subheader("🏆 Benchmark WER")
+    st.markdown("""
+    | Dataset Split | WER (%) |
+    | :--- | :---: |
+    | **Loubna Stories** | **0.34%** |
+    | **Kahwa Podcast** | **0.68%** |
+    | **Rawi Storytelling** | **0.95%** |
+    """)
+    
+    st.info("💡 **Curriculum Learning**: Fine-tuned over 31,661 steps across conversational podcasts, spontaneous storytelling, and cultural narratives.")
 
 # --- Session State Initialization ---
 if "active_audio" not in st.session_state:
@@ -223,11 +206,11 @@ if "audio_duration" not in st.session_state:
 tab_mic, tab_upload = st.tabs(["🎙️ Record Microphone", "📁 Upload Audio File"])
 
 with tab_mic:
-    st.write("Click below to record your voice in Algerian Darja:")
+    st.write("Click below and speak naturally in Algerian Darja:")
     recorded_audio = mic_recorder(
         start_prompt="🔴 Start Recording",
         stop_prompt="⏹️ Stop Recording",
-        key="darja_mic_recorder",
+        key="darja_medium_mic_recorder",
         use_container_width=True
     )
     if recorded_audio and "bytes" in recorded_audio and len(recorded_audio["bytes"]) > 0:
@@ -235,9 +218,9 @@ with tab_mic:
 
 with tab_upload:
     uploaded_file = st.file_uploader(
-        "Upload an audio file (WAV, MP3, OGG, M4A, FLAC):",
+        "Upload an Algerian audio clip (WAV, MP3, OGG, M4A, FLAC):",
         type=["wav", "mp3", "ogg", "m4a", "flac"],
-        key="darja_file_uploader"
+        key="darja_medium_file_uploader"
     )
     if uploaded_file is not None:
         st.session_state.active_audio = uploaded_file.read()
@@ -257,15 +240,16 @@ if st.session_state.active_audio:
             st.session_state.transcription_text = None
             st.rerun()
     
-    if st.button("⚡ Transcribe Audio (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
-        with st.spinner(f"Transcribing using {selected_model_name.split(' (')[0]}..."):
+    if st.button("⚡ Transcribe Speech (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
+        with st.spinner("Transcribing with Whisper Medium Algerian Darja..."):
             try:
-                # Decode audio to 16kHz mono float32 array
+                # Robustly decode audio to 16kHz mono float32
                 audio_array = decode_audio_bytes(st.session_state.active_audio)
 
                 if len(audio_array) == 0:
-                    st.warning("Recorded/uploaded audio is empty. Please try again.")
+                    st.warning("The audio input is empty. Please record or upload a valid audio sample.")
                 else:
+                    # Feature Extraction
                     input_features = processor(
                         audio_array,
                         sampling_rate=16000,
@@ -307,7 +291,7 @@ if st.session_state.active_audio:
                     st.session_state.audio_duration = len(audio_array) / 16000.0
 
             except Exception as e:
-                st.error(f"Error processing audio: {str(e)}")
+                st.error(f"Error during transcription: {str(e)}")
 
 # Display Persisted Results
 if st.session_state.transcription_text:
@@ -315,7 +299,7 @@ if st.session_state.transcription_text:
     st.markdown(f'<div class="darja-output">{st.session_state.transcription_text}</div>', unsafe_allow_html=True)
     
     # Text area for easy copy
-    st.text_area("Text Output (for easy copy):", value=st.session_state.transcription_text, height=95)
+    st.text_area("Text Output (for easy copying):", value=st.session_state.transcription_text, height=100)
     
     word_count = len(st.session_state.transcription_text.split())
     char_count = len(st.session_state.transcription_text)
@@ -323,4 +307,4 @@ if st.session_state.transcription_text:
 
 # --- Footer ---
 st.divider()
-st.caption("Developed by **Kamel Touati** | Powered by OpenAI Whisper, PEFT (LoRA), and Streamlit.")
+st.caption("Developed by **Kamel Touati** | Powered by OpenAI Whisper Medium, PEFT (LoRA), and Streamlit. [Hugging Face Model](https://huggingface.co/touati-kamel/whisper-algerian-darja-medium).")
