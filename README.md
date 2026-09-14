@@ -14,7 +14,7 @@
 
 ---
 
-## 📌 Overview
+## Overview
 
 This repository contains the evaluation benchmarks, inference code, and interactive **Streamlit comparison application** for fine-tuned Automatic Speech Recognition (ASR) models for **Algerian Arabic (Darja / الدارجة الجزائرية)**:
 
@@ -25,18 +25,18 @@ Both models were adapted from **OpenAI Whisper** via 4-bit quantized Low-Rank Ad
 
 ---
 
-## 🏆 Comprehensive Benchmark & Performance Matrix
+## Comprehensive Benchmark & Performance Matrix
 
 The models were evaluated iteratively across three distinct Algerian dialect audio domains using Word Error Rate (**WER %**) and Cross-Entropy Loss with standardized Arabic text normalization:
 
-| Domain / Benchmark Split | Dataset Identifier | Whisper Small (267M) WER | Whisper Medium (833M) WER | Error Reduction |
+| Domain / Benchmark Split | Dataset Identifier | Whisper Small (267M) WER | Whisper Medium (833M) WER | Relative Error Reduction |
 | :--- | :--- | :---: | :---: | :---: |
 | **Loubna Expressive Stories** | `oddadmix/arabic-audio-collection-algerian-loubna-stories` | 14.87% | **0.34%** | **-97.7%** |
 | **Kahwa Conversational Podcast** | `oddadmix/arabic-audio-collection-algerian-kahwa-postcast` | 34.85% | **0.68%** | **-98.0%** |
 | **Rawi Cultural Storytelling** | `oddadmix/arabic-audio-collection-algerian-rawi` | 27.54% | **0.95%** | **-96.5%** |
 | **Final Evaluation Loss** | — | 0.2548 | **0.00612** | **-97.6%** |
 
-### 🔍 Model Architecture Specifications
+### Model Architecture Specifications
 
 | Specification | Whisper Small (`openai/whisper-small`) | Whisper Medium (`openai/whisper-medium`) |
 | :--- | :---: | :---: |
@@ -52,7 +52,7 @@ The models were evaluated iteratively across three distinct Algerian dialect aud
 
 ---
 
-## 🚀 Sequential Curriculum Learning Methodology
+## Sequential Curriculum Learning Methodology
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -82,16 +82,16 @@ The models were evaluated iteratively across three distinct Algerian dialect aud
 
 ---
 
-## 🎙️ Interactive Streamlit Comparison Application
+## Interactive Streamlit Comparison Application
 
 The repository includes a web application ([`app.py`](app.py)) that allows users to record or upload a **single audio input** and compare the transcription outputs of **both models side-by-side**.
 
 ### Features:
-- 🔴 **Live Microphone Recording & Audio File Upload** (WAV, MP3, OGG, M4A, FLAC, WebM).
-- ⚡ **Side-by-Side Model Comparison**: Real-time evaluation of Whisper Medium vs. Whisper Small on the identical audio stream.
-- 🔍 **Output Diff & Similarity Score**: Computes textual alignment and shows vocabulary/phonetic nuances between models.
-- 🧹 **Darja Text Normalization Toggle**: Diacritics (harakat), tatweel (kashida), punctuation, and Alef/Yaa normalization.
-- 📋 **Copy to Clipboard & Latency / Duration Metrics**.
+- **Live Microphone Recording & Audio File Upload** (WAV, MP3, OGG, M4A, FLAC, WebM).
+- **Side-by-Side Model Comparison**: Real-time evaluation of Whisper Medium vs. Whisper Small on the identical audio stream.
+- **Output Diff & Similarity Score**: Computes textual alignment and shows vocabulary/phonetic nuances between models.
+- **Darja Text Normalization Toggle**: Diacritics (harakat), tatweel (kashida), punctuation, and Alef/Yaa normalization.
+- **Copy to Clipboard & Latency / Duration Metrics**.
 
 ### Running the App Locally:
 
@@ -109,7 +109,7 @@ streamlit run app.py
 
 ---
 
-## 💻 Python Quickstart & Inference
+## Python Quickstart & Inference
 
 ### 1. Installation
 
@@ -189,7 +189,7 @@ print("Algerian Darja Output:", transcription)
 
 ---
 
-## 🧹 Complete Arabic Normalization Function
+## Complete Arabic Normalization Function
 
 ```python
 import re
@@ -216,7 +216,7 @@ def normalize_darja_text(text: str) -> str:
 
 ---
 
-## 📚 Datasets & Citations
+## Datasets & Citations
 
 ### Training Datasets
 - [oddadmix/arabic-audio-collection-algerian-kahwa-postcast](https://huggingface.co/datasets/oddadmix/arabic-audio-collection-algerian-kahwa-postcast)

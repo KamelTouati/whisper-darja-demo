@@ -13,7 +13,6 @@ from streamlit_mic_recorder import mic_recorder
 # --- Page Configuration ---
 st.set_page_config(
     page_title="Whisper Medium — Algerian Darja ASR",
-    page_icon="🎙️",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -91,7 +90,7 @@ def decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
     Decodes audio bytes of any format (WebM, OGG/Opus, MP3, WAV, M4A, FLAC)
     into a 16000Hz mono float32 numpy array.
     """
-    # Method 1: pydub (leverages ffmpeg)
+    # Method 1: pydub
     try:
         from pydub import AudioSegment
         seg = AudioSegment.from_file(io.BytesIO(audio_bytes))
@@ -173,7 +172,7 @@ st.markdown('<div class="sub-title">التعرف الآلي عالي الدقة 
 
 # --- Sidebar ---
 with st.sidebar:
-    st.header("⚙️ Model Specifications")
+    st.header("Model Specifications")
     st.markdown("""
     - **Base Model**: `openai/whisper-medium`
     - **LoRA Adapter**: [`touati-kamel/whisper-algerian-darja-medium`](https://huggingface.co/touati-kamel/whisper-algerian-darja-medium)
@@ -183,7 +182,7 @@ with st.sidebar:
     - **Device**: `{}`
     """.format(DEVICE.upper()))
     
-    st.subheader("🏆 Benchmark WER")
+    st.subheader("Benchmark WER")
     st.markdown("""
     | Dataset Split | WER (%) |
     | :--- | :---: |
@@ -192,7 +191,7 @@ with st.sidebar:
     | **Rawi Storytelling** | **0.95%** |
     """)
     
-    st.info("💡 **Curriculum Learning**: Fine-tuned over 31,661 steps across conversational podcasts, spontaneous storytelling, and cultural narratives.")
+    st.info("Curriculum Learning: Fine-tuned over 31,661 steps across conversational podcasts, spontaneous storytelling, and cultural narratives.")
 
 # --- Session State Initialization ---
 if "active_audio" not in st.session_state:
@@ -203,13 +202,13 @@ if "audio_duration" not in st.session_state:
     st.session_state.audio_duration = 0.0
 
 # --- Audio Input Tabs ---
-tab_mic, tab_upload = st.tabs(["🎙️ Record Microphone", "📁 Upload Audio File"])
+tab_mic, tab_upload = st.tabs(["Record Microphone", "Upload Audio File"])
 
 with tab_mic:
     st.write("Click below and speak naturally in Algerian Darja:")
     recorded_audio = mic_recorder(
-        start_prompt="🔴 Start Recording",
-        stop_prompt="⏹️ Stop Recording",
+        start_prompt="Start Recording",
+        stop_prompt="Stop Recording",
         key="darja_medium_mic_recorder",
         use_container_width=True
     )
@@ -228,19 +227,19 @@ with tab_upload:
 # --- Processing & Output ---
 if st.session_state.active_audio:
     st.divider()
-    st.subheader("🎧 Audio Playback")
+    st.subheader("Audio Playback")
     st.audio(st.session_state.active_audio)
     
     col1, col2 = st.columns([2, 1])
     with col1:
         apply_norm = st.checkbox("Apply Darja Text Normalization (تنظيف وتوحيد الحروف)", value=True)
     with col2:
-        if st.button("🗑️ Clear Audio"):
+        if st.button("Clear Audio"):
             st.session_state.active_audio = None
             st.session_state.transcription_text = None
             st.rerun()
     
-    if st.button("⚡ Transcribe Speech (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
+    if st.button("Transcribe Speech (تحويل الصوت إلى نص)", type="primary", use_container_width=True):
         with st.spinner("Transcribing with Whisper Medium Algerian Darja..."):
             try:
                 # Robustly decode audio to 16kHz mono float32
@@ -295,7 +294,7 @@ if st.session_state.active_audio:
 
 # Display Persisted Results
 if st.session_state.transcription_text:
-    st.success("✅ Transcription Complete!")
+    st.success("Transcription Complete.")
     st.markdown(f'<div class="darja-output">{st.session_state.transcription_text}</div>', unsafe_allow_html=True)
     
     # Text area for easy copy
@@ -303,7 +302,7 @@ if st.session_state.transcription_text:
     
     word_count = len(st.session_state.transcription_text.split())
     char_count = len(st.session_state.transcription_text)
-    st.caption(f"⏱️ Audio Duration: **{st.session_state.audio_duration:.2f}s** | 📝 Words: **{word_count}** | 🔤 Characters: **{char_count}**")
+    st.caption(f"Audio Duration: **{st.session_state.audio_duration:.2f}s** | Words: **{word_count}** | Characters: **{char_count}**")
 
 # --- Footer ---
 st.divider()

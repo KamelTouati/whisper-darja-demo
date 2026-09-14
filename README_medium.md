@@ -78,7 +78,7 @@ model-index:
 
 ## Overview
 
-**`touati-kamel/whisper-algerian-darja-medium`** is a state-of-the-art Automatic Speech Recognition (ASR) model specifically fine-tuned for **Algerian Arabic (Darja / الدارجة الجزائرية)**. 
+**`touati-kamel/whisper-algerian-darja-medium`** is an Automatic Speech Recognition (ASR) model specifically fine-tuned for **Algerian Arabic (Darja / الدارجة الجزائرية)**. 
 
 Built on top of **OpenAI's Whisper Medium** (`openai/whisper-medium`, 769M base parameters / 833M total parameters), this model incorporates parameter-efficient LoRA adapters trained with **4-bit quantization (QLoRA)** over a comprehensive sequential 3-phase curriculum covering conversational podcasts, spontaneous storytelling, and cultural narratives from the **OddAdmix Algerian speech collection**.
 
@@ -86,7 +86,7 @@ Built on top of **OpenAI's Whisper Medium** (`openai/whisper-medium`, 769M base 
 - **Native Algerian Dialect Adaptation**: Exceptional comprehension of authentic Algerian Darja vocabulary, morphology, fast colloquial speech, and code-mixed expressions.
 - **Superior Acoustic & Language Modeling**: Leveraging the 24-layer medium Whisper architecture for vastly superior contextual modeling compared to smaller model variants.
 - **Parameter-Efficient LoRA (PEFT)**: Trained on **69.21M parameters** (8.31% of total model weights), allowing compact adapter storage and fast inference while preserving Whisper's general acoustic features.
-- **Ultra-Low Error Rates**: Achieved **0.34% WER** on storytelling evaluation subsets, **0.68% WER** on conversational podcast subsets, and **0.95% WER** on cultural narratives.
+- **Low Error Rates**: Achieved **0.34% WER** on storytelling evaluation subsets, **0.68% WER** on conversational podcast subsets, and **0.95% WER** on cultural narratives.
 - **Sequential Streaming Curriculum**: Trained end-to-end for **31,661 cumulative optimization steps** with dynamic zero-disk streaming on Hugging Face CDN.
 
 ---

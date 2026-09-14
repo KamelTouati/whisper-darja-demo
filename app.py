@@ -15,7 +15,6 @@ from streamlit_mic_recorder import mic_recorder
 # --- Page Configuration ---
 st.set_page_config(
     page_title="Whisper Algerian Darja ASR — Small vs. Medium",
-    page_icon="🎙️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -205,7 +204,7 @@ MODELS_INFO = {
         "adapter_id": "touati-kamel/whisper-algerian-darja-medium",
         "params": "833M total (69.2M LoRA)",
         "badge_class": "badge-medium",
-        "badge_text": "⭐ SOTA — Best WER: 0.34%",
+        "badge_text": "SOTA — Best WER: 0.34%",
         "card_class": "model-card-medium",
         "output_class": "darja-output-medium",
         "wer": {"Loubna Stories": "0.34%", "Kahwa Podcast": "0.68%", "Rawi Stories": "0.95%"}
@@ -216,7 +215,7 @@ MODELS_INFO = {
         "adapter_id": "touati-kamel/whisper-algerian-darja-small",
         "params": "267M total (25.9M LoRA)",
         "badge_class": "badge-small",
-        "badge_text": "⚡ Lightweight — Best WER: 14.87%",
+        "badge_text": "Lightweight — Best WER: 14.87%",
         "card_class": "model-card-small",
         "output_class": "darja-output-small",
         "wer": {"Loubna Stories": "14.87%", "Rawi Stories": "27.54%", "Kahwa Podcast": "34.85%"}
@@ -285,22 +284,22 @@ def run_transcription(model_key: str, audio_array: np.ndarray, apply_norm: bool 
 
 # --- Sidebar UI ---
 with st.sidebar:
-    st.header("⚙️ Evaluation & Comparison")
+    st.header("Evaluation & Comparison")
     
     inference_mode = st.radio(
         "Select Transcription Mode:",
         options=[
-            "⚡ Compare Both Models (Side-by-Side)",
-            "🚀 Whisper Medium (Recommended)",
-            "🔹 Whisper Small (Lightweight)"
+            "Compare Both Models (Side-by-Side)",
+            "Whisper Medium (Recommended)",
+            "Whisper Small (Lightweight)"
         ],
         index=0
     )
     
     st.markdown("---")
-    st.subheader("📊 Benchmark WER Comparison")
+    st.subheader("Benchmark WER Comparison")
     st.markdown("""
-    | Dataset Split | Medium (833M) | Small (267M) | Δ Gain |
+    | Dataset Split | Medium (833M) | Small (267M) | Relative Gain |
     | :--- | :---: | :---: | :---: |
     | **Loubna Stories** | **0.34%** | 14.87% | **+97.7%** |
     | **Kahwa Podcast** | **0.68%** | 34.85% | **+98.0%** |
@@ -328,13 +327,13 @@ if "audio_duration" not in st.session_state:
     st.session_state.audio_duration = 0.0
 
 # --- Audio Input Tabs ---
-tab_mic, tab_upload = st.tabs(["🎙️ Record Voice (ميكروفون)", "📁 Upload Audio File (ملف صوتي)"])
+tab_mic, tab_upload = st.tabs(["Record Voice (ميكروفون)", "Upload Audio File (ملف صوتي)"])
 
 with tab_mic:
     st.write("Record your voice in Algerian Darja (any dialect):")
     recorded_audio = mic_recorder(
-        start_prompt="🔴 Start Recording",
-        stop_prompt="⏹️ Stop Recording",
+        start_prompt="Start Recording",
+        stop_prompt="Stop Recording",
         key="darja_compare_mic_recorder",
         use_container_width=True
     )
@@ -356,21 +355,21 @@ if st.session_state.active_audio:
     
     col_audio, col_ctrl = st.columns([2, 1])
     with col_audio:
-        st.subheader("🎧 Audio Input Preview")
+        st.subheader("Audio Input Preview")
         st.audio(st.session_state.active_audio)
     
     with col_ctrl:
         st.write(" ")
         st.write(" ")
         apply_norm = st.checkbox("Apply Darja Text Normalization (تنظيف وتوحيد الحروف)", value=True)
-        if st.button("🗑️ Clear Audio & Results"):
+        if st.button("Clear Audio & Results"):
             st.session_state.active_audio = None
             st.session_state.transcription_results = {}
             st.session_state.audio_duration = 0.0
             st.rerun()
 
     # Transcribe Button
-    button_label = "⚡ Run Side-by-Side Model Comparison (مقارنة النموذجين معاً)" if "Compare" in inference_mode else "⚡ Transcribe Audio (تحويل الصوت إلى نص)"
+    button_label = "Run Side-by-Side Model Comparison (مقارنة النموذجين معاً)" if "Compare" in inference_mode else "Transcribe Audio (تحويل الصوت إلى نص)"
     
     if st.button(button_label, type="primary", use_container_width=True):
         st.session_state.transcription_results = {}
@@ -407,7 +406,7 @@ if st.session_state.active_audio:
                         "latency": latency
                     }
                 
-                progress_bar.progress(100, text="Transcription Complete!")
+                progress_bar.progress(100, text="Transcription Complete.")
                 time.sleep(0.3)
                 progress_bar.empty()
                 
@@ -418,7 +417,7 @@ if st.session_state.active_audio:
 results = st.session_state.transcription_results
 if results:
     st.divider()
-    st.subheader("🎯 Transcription Results & Model Comparison")
+    st.subheader("Transcription Results & Model Comparison")
     
     if len(results) == 2:
         col_med, col_sml = st.columns(2)
@@ -437,7 +436,7 @@ if results:
             st.text_area("Medium Output (Copy):", value=med_res.get("text", ""), height=80, key="copy_med")
             w_med = len(med_res.get("text", "").split())
             c_med = len(med_res.get("text", ""))
-            st.caption(f"⏱️ Inference Latency: **{med_res.get('latency', 0.0):.2f}s** | Words: **{w_med}** | Chars: **{c_med}**")
+            st.caption(f"Inference Latency: **{med_res.get('latency', 0.0):.2f}s** | Words: **{w_med}** | Chars: **{c_med}**")
 
         # Whisper Small Column
         with col_sml:
@@ -453,7 +452,7 @@ if results:
             st.text_area("Small Output (Copy):", value=sml_res.get("text", ""), height=80, key="copy_sml")
             w_sml = len(sml_res.get("text", "").split())
             c_sml = len(sml_res.get("text", ""))
-            st.caption(f"⏱️ Inference Latency: **{sml_res.get('latency', 0.0):.2f}s** | Words: **{w_sml}** | Chars: **{c_sml}**")
+            st.caption(f"Inference Latency: **{sml_res.get('latency', 0.0):.2f}s** | Words: **{w_sml}** | Chars: **{c_sml}**")
         
         # Text Comparison Difference Summary
         med_words = med_res.get("text", "").split()
@@ -463,7 +462,7 @@ if results:
         
         st.markdown(f"""
         <div class="diff-box">
-            <b>🔍 ملخص المقارنة بين النموذجين:</b><br>
+            <b>ملخص المقارنة بين النموذجين:</b><br>
             • نسبة التطابق النصي بين المخرجات: <b>{similarity:.1f}%</b><br>
             • يتميز النموذج <b>Medium (833M)</b> بقدرة فائقة على فهم مخارج الحروف الجزائرية وسرعة الكلام والكلمات المركبة بدقة مضاعفة (WER 0.34% مقابل 14.87%).
         </div>
@@ -483,7 +482,7 @@ if results:
             st.text_area(f"{info['title']} Output (Copy):", value=m_res.get("text", ""), height=90, key=f"copy_{m_key}")
             w_count = len(m_res.get("text", "").split())
             c_count = len(m_res.get("text", ""))
-            st.caption(f"⏱️ Latency: **{m_res.get('latency', 0.0):.2f}s** | Duration: **{st.session_state.audio_duration:.2f}s** | Words: **{w_count}** | Chars: **{c_count}**")
+            st.caption(f"Latency: **{m_res.get('latency', 0.0):.2f}s** | Duration: **{st.session_state.audio_duration:.2f}s** | Words: **{w_count}** | Chars: **{c_count}**")
 
 # --- Footer ---
 st.divider()
