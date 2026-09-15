@@ -1,18 +1,12 @@
 %&xelatex
-\DocumentMetadata{}
 \documentclass[11pt,a4paper]{article}
 
-% --- Fix for Overleaf / TeX Live 2026 bidi tabular tagging conflict ---
-\makeatletter
-\providecommand\UseMathForPositioningText{}
-\makeatother
-
-% --- Core Packages & Multilingual Arabic Support ---
+% --- Core Typography & Multilingual Arabic Support (Babel + XeLaTeX) ---
 \usepackage{fontspec}
-\usepackage{polyglossia}
-\setmainlanguage{english}
-\setotherlanguage{arabic}
-\newfontfamily\arabicfont[Script=Arabic]{Amiri}
+\usepackage[bidi=default,english]{babel}
+\babelprovide[import,onchar=fonts ids]{arabic}
+\babelfont[arabic]{rm}{Amiri}
+\providecommand{\textarabic}[1]{\foreignlanguage{arabic}{#1}}
 
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{amsmath,amssymb,amsfonts}
