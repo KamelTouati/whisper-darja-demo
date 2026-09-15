@@ -19,10 +19,13 @@
 \usepackage{microtype}
 \usepackage{cite}
 \usepackage{enumitem}
-\usepackage{color}
+\usepackage[table]{xcolor}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{subcaption}
+\usepackage{caption}
+\captionsetup[table]{skip=6pt, font=small, labelfont=bf}
+\captionsetup[figure]{skip=6pt, font=small, labelfont=bf}
 
 % --- Hyperlink Formatting ---
 \hypersetup{
@@ -111,18 +114,19 @@ The dataset is structured into three progressive splits:
 
 \begin{table}[t]
 \centering
+\small
+\renewcommand{\arraystretch}{1.25}
 \caption{OddAdmix Algerian Speech Collection split statistics and characteristics.}
 \label{tab:dataset_stats}
-\small
-\begin{tabularx}{\textwidth}{lcccc}
+\begin{tabularx}{\textwidth}{@{} l r >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X @{}}
 \toprule
 \textbf{Split / Dataset} & \textbf{Utterances} & \textbf{Linguistic Style} & \textbf{Code-Switching} & \textbf{Audio Condition} \\
 \midrule
-\textbf{Kahwa Podcast} & 23,264 & Conversational / Spontaneous & High (French/Darja) & Studio / Multi-speaker \\
-\textbf{Loubna Stories} & 41,301 & Expressive Narratives & Moderate & Studio / Expressive \\
-\textbf{Rawi Storytelling} & 4,501 & Cultural Oral Folklore & Low & Variable Acoustic \\
+\textbf{Kahwa Podcast}     & 23,264 & Conversational / Spontaneous & High (French/Darja) & Studio / Multi-speaker \\
+\textbf{Loubna Stories}    & 41,301 & Expressive Narratives        & Moderate            & Studio / Expressive \\
+\textbf{Rawi Storytelling} &  4,501 & Cultural Oral Folklore       & Low                 & Variable Acoustic \\
 \midrule
-\textbf{Total Collection} & \textbf{69,066} & \textbf{Multi-Domain Algerian} & \textbf{Authentic} & \textbf{16,000 Hz Mono} \\
+\textbf{Total Collection}  & \textbf{69,066} & \textbf{Multi-Domain Algerian} & \textbf{Authentic} & \textbf{16,000 Hz Mono} \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -134,7 +138,7 @@ To ensure robust training, audio and text modalities undergo rigorous pipeline n
 
 \paragraph{Dialect-Aware Text Harmonization:} Algerian Darja transcription in Arabic script suffers from non-standard orthography and divergent phonetic spelling conventions, as characterized in dialect modeling studies \cite{abdaoui2021dziribert}. We implement a deterministic normalizer:
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{Annotation Removal}: Strip French transcription tags (\texttt{[French: ...]}, \texttt{[FR: ...]}) and non-speech bracketed tokens (\texttt{[...]}, \texttt{<...>}).
+    \item \textbf{Annotation Removal}: Strip French transcription tags (\texttt{[French:\dots]}, \texttt{[FR:\dots]}) and non-speech bracketed tokens (\texttt{[\dots]}, \texttt{<\dots>}).
     \item \textbf{Diacritic \& Tatweel Removal}: Strip all Arabic short vowels/diacritics (\textit{Tashkeel}: \texttt{\textbackslash u064B}--\texttt{\textbackslash u0652}, \texttt{\textbackslash u0670}) and Kashida elongation (\texttt{\textbackslash u0640}).
     \item \textbf{Letter Standardization}: Normalize all Hamza forms onto bare Alef (\textarabic{إ، أ، آ} $\rightarrow$ \textarabic{ا}), and map Alef Maksura to Yaa (\textarabic{ى} $\rightarrow$ \textarabic{ي}).
     \item \textbf{Punctuation \& Whitespace}: Strip standard Latin and Arabic punctuation marks (\textarabic{،} \textarabic{؛} \textarabic{؟} « ») and collapse multiple whitespaces.
@@ -163,17 +167,18 @@ As summarized in Table~\ref{tab:model_params}, parameter adaptation updates only
 
 \begin{table}[t]
 \centering
+\small
+\renewcommand{\arraystretch}{1.25}
 \caption{Parameter breakdown for Whisper Small and Medium under QLoRA adaptation.}
 \label{tab:model_params}
-\small
-\begin{tabular}{lcccc}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}} l r r r r @{}}
 \toprule
 \textbf{Model Variant} & \textbf{Base Parameters} & \textbf{Trainable LoRA} & \textbf{Total Parameters} & \textbf{Trainable Ratio (\%)} \\
 \midrule
-\textbf{Whisper Small} & 241,734,912 & 25,952,256 & 267,687,168 & 9.695\% \\
-\textbf{Whisper Medium} & 763,857,920 & 69,206,016 & 833,063,936 & 8.307\% \\
+\textbf{Whisper Small}  & 241,734,912 & 25,952,256 & 267,687,168 & 9.695\% \\
+\textbf{Whisper Medium} & 763,857,920 & 69,206,016 & 833,063,936 & \textbf{8.307\%} \\
 \bottomrule
-\end{tabular}
+\end{tabular*}
 \end{table}
 
 \subsection{Zero-Disk Sequential Streaming Curriculum}
@@ -227,27 +232,28 @@ where $N_k$ is the raw split size, $\rho \approx 0.15$ accounts for the empirica
 \subsection{Hyperparameters and Hardware}
 All experiments are conducted on a single NVIDIA Tesla T4 GPU (16 GB VRAM). Training configurations across phases are summarized in Table~\ref{tab:hyperparams}.
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Training hyperparameters across curriculum phases.}
-\label{tab:hyperparams}
 \small
-\begin{tabular}{lccc}
+\renewcommand{\arraystretch}{1.25}
+\caption{Training hyperparameters across sequential curriculum phases.}
+\label{tab:hyperparams}
+\begin{tabularx}{\textwidth}{@{} >{\bfseries}l >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X @{}}
 \toprule
 \textbf{Hyperparameter} & \textbf{Phase 1: Kahwa} & \textbf{Phase 2: Loubna} & \textbf{Phase 3: Rawi} \\
 \midrule
-\textbf{Dataset} & Kahwa Podcast & Loubna Stories & Rawi Storytelling \\
-\textbf{Epochs / Steps} & 2 epochs (9,886 steps) & 2 epochs (20,650 steps) & 1 epoch (1,125 steps) \\
-\textbf{Peak Learning Rate} & $1 \times 10^{-4}$ & $5 \times 10^{-5}$ & $2 \times 10^{-5}$ \\
-\textbf{Warmup Steps} & 100 & 50 & 30 \\
-\textbf{LR Schedule} & Cosine Annealing & Cosine Annealing & Cosine Annealing \\
-\textbf{Optimizer} & AdamW ($\beta_1=0.9, \beta_2=0.999$) & AdamW & AdamW \\
-\textbf{Per-Device Batch Size} & 4 & 4 & 4 \\
-\textbf{Gradient Accumulation} & 8 (Effective Batch = 32) & 8 & 8 \\
-\textbf{Precision} & FP16 Mixed Precision & FP16 & FP16 \\
-\textbf{Evaluation Frequency} & Every 300 steps & Every 300 steps & Every 300 steps \\
+Target Domain          & Kahwa Podcast & Loubna Stories & Rawi Storytelling \\
+Training Duration      & 2 epochs (9,886 steps) & 2 epochs (20,650 steps) & 1 epoch (1,125 steps) \\
+Peak Learning Rate     & $1 \times 10^{-4}$ & $5 \times 10^{-5}$ & $2 \times 10^{-5}$ \\
+Warmup Steps           & 100 & 50 & 30 \\
+LR Scheduler           & Cosine Annealing & Cosine Annealing & Cosine Annealing \\
+Optimizer              & AdamW ($\beta_1=0.9, \beta_2=0.999$) & AdamW & AdamW \\
+Per-Device Batch Size  & 4 & 4 & 4 \\
+Gradient Accumulation  & 8 (Effective Batch = 32) & 8 & 8 \\
+Precision              & FP16 Mixed Precision & FP16 & FP16 \\
+Evaluation Frequency   & Every 300 steps & Every 300 steps & Every 300 steps \\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \end{table}
 
 \subsection{Evaluation Metrics}
@@ -265,19 +271,20 @@ Table~\ref{tab:main_results} presents the quantitative comparison between the Wh
 
 \begin{table}[t]
 \centering
+\small
+\renewcommand{\arraystretch}{1.25}
 \caption{Benchmark Word Error Rate (WER \%) and Final Evaluation Loss on OddAdmix splits.}
 \label{tab:main_results}
-\small
-\begin{tabularx}{\textwidth}{lcccc}
+\begin{tabularx}{\textwidth}{@{} X c c c @{}}
 \toprule
-\textbf{Dataset Domain} & \textbf{Whisper Small (267M)} & \textbf{Whisper Medium (833M)} & \textbf{Relative Error Reduction} \\
+\textbf{Dataset Domain / Phase} & \textbf{Whisper Small (267M)} & \textbf{Whisper Medium (833M)} & \textbf{Relative WER Reduction} \\
 \midrule
-\textbf{Phase 1: Kahwa Podcast} & 34.85\% & \textbf{0.68\%} & \textbf{-98.05\%} \\
-\textbf{Phase 2: Loubna Stories} & 14.87\% & \textbf{0.34\%} & \textbf{-97.71\%} \\
-\textbf{Phase 3: Rawi Storytelling} & 27.54\% & \textbf{0.95\%} & \textbf{-96.55\%} \\
+\textbf{Phase 1: Kahwa Podcast}     & 34.85\% & \textbf{0.68\%}  & \textbf{$-98.05\%$} \\
+\textbf{Phase 2: Loubna Stories}    & 14.87\% & \textbf{0.34\%}  & \textbf{$-97.71\%$} \\
+\textbf{Phase 3: Rawi Storytelling} & 27.54\% & \textbf{0.95\%}  & \textbf{$-96.55\%$} \\
 \midrule
-\textbf{Final Cross-Entropy Loss} & 0.2548 & \textbf{0.00612} & \textbf{-97.60\%} \\
-\textbf{Total Optimization Steps} & 15,829 steps & \textbf{31,661 steps} & --- \\
+\textbf{Final Cross-Entropy Loss}   & 0.2548  & \textbf{0.00612} & \textbf{$-97.60\%$} \\
+\textbf{Total Optimization Steps}   & 15,829 steps & \textbf{31,661 steps} & --- \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -318,20 +325,25 @@ Table~\ref{tab:qualitative_examples} illustrates representative transcription ou
 
 \begin{table}[h]
 \centering
+\small
+\renewcommand{\arraystretch}{1.3}
 \caption{Qualitative comparison of transcription outputs between Whisper Small and Medium.}
 \label{tab:qualitative_examples}
-\small
-\begin{tabularx}{\textwidth}{lX}
+\begin{tabularx}{\textwidth}{@{} p{3.8cm} X @{}}
 \toprule
-\textbf{Category} & \textbf{Audio Transcript / Model Outputs} \\
+\textbf{Model / Evaluation Target} & \textbf{Transcription Output and Error Characterization} \\
 \midrule
-\textbf{Reference Audio} & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \\
-\textbf{Whisper Small} & \textarabic{قالوا بلي راه جاي غدا الصباح مع أصحابه كاملين} (MSA substitution error) \\
-\textbf{Whisper Medium} & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} (\textbf{Exact match}) \\
+\multicolumn{2}{@{}l}{\textbf{Example 1: Colloquial Phonetics \& Non-Standard Phrasing (Kahwa Podcast)}} \\
 \midrule
-\textbf{Reference Audio (Code-Switched)} & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \\
-\textbf{Whisper Small} & \textarabic{درنا اجتماع على جال بروجي جديد داتاسيت} (Preposition deletion) \\
-\textbf{Whisper Medium} & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} (\textbf{Exact match}) \\
+Reference Audio  & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \\
+Whisper Small    & \textarabic{قالوا بلي راه جاي غدا الصباح مع أصحابه كاملين} \quad \textit{\textcolor{red!70!black}{(MSA substitution error)}} \\
+Whisper Medium   & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \quad \textit{\textcolor{teal!80!black}{(\textbf{Exact match})}} \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{Example 2: Intra-Sentential Code-Switching with French Loanwords (Loubna Stories)}} \\
+\midrule
+Reference Audio  & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \\
+Whisper Small    & \textarabic{درنا اجتماع على جال بروجي جديد داتاسيت} \quad \textit{\textcolor{red!70!black}{(Preposition deletion)}} \\
+Whisper Medium   & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \quad \textit{\textcolor{teal!80!black}{(\textbf{Exact match})}} \\
 \bottomrule
 \end{tabularx}
 \end{table}
