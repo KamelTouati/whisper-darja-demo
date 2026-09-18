@@ -303,19 +303,21 @@ Training progress across the 31,661 cumulative steps proceeds with high numerica
 
 \begin{figure}[t]
 \centering
-\begin{minipage}{0.48\textwidth}
-\centering
-\framebox[\linewidth]{\parbox{0.9\linewidth}{\centering \vspace{1.5cm} \textbf{Phase Progression: WER (\%)} \\ Phase 1: 43.05\% $\rightarrow$ 0.68\% \\ Phase 2: 13.70\% $\rightarrow$ 0.34\% \\ Phase 3: 19.22\% $\rightarrow$ 0.95\% \vspace{1.5cm}}}
-\caption{Validation WER convergence across sequential curriculum phases.}
-\label{fig:loss_trajectory}
-\end{minipage}
+\begin{subfigure}[b]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig_wer_convergence.pdf}
+    \caption{Validation WER convergence across phases.}
+    \label{fig:wer_convergence}
+\end{subfigure}
 \hfill
-\begin{minipage}{0.48\textwidth}
-\centering
-\framebox[\linewidth]{\parbox{0.9\linewidth}{\centering \vspace{1.5cm} \textbf{Memory \& Throughput} \\ 4-bit QLoRA VRAM: 7.2 GB \\ Disk Usage: Flat ($\sim$0 GB cache) \\ Effective Batch: 32 samples \vspace{1.5cm}}}
-\caption{Computational and VRAM memory footprint on Tesla T4.}
-\label{fig:memory_profile}
-\end{minipage}
+\begin{subfigure}[b]{0.49\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{fig_loss_trajectory.pdf}
+    \caption{Training and evaluation loss trajectory.}
+    \label{fig:loss_trajectory}
+\end{subfigure}
+\caption{Empirical training dynamics of Whisper Medium under sequential streaming curriculum adaptation across 31,661 cumulative steps on the OddAdmix Algerian speech collection.}
+\label{fig:training_dynamics}
 \end{figure}
 
 \section{Qualitative Error Analysis}
