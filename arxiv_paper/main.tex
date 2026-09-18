@@ -23,6 +23,8 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{subcaption}
+\usepackage{float}
+\usepackage{placeins}
 \usepackage{caption}
 \captionsetup[table]{skip=6pt, font=small, labelfont=bf}
 \captionsetup[figure]{skip=6pt, font=small, labelfont=bf}
@@ -325,7 +327,7 @@ Training progress across the 31,661 cumulative steps proceeds with high numerica
 
 To understand the practical linguistic differences between model variants, Table~\ref{tab:qualitative_examples} presents empirical transcription outputs obtained during live evaluation on authentic Algerian Darja audio samples.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \small
 \renewcommand{\arraystretch}{1.3}
@@ -357,6 +359,7 @@ The qualitative results highlight two key phenomena:
     \item \textbf{Inference Speed vs. Accuracy Trade-off}: While Whisper Medium achieves near-perfect fidelity (0.34\% WER), empirical benchmarks on commodity CPU hardware reveal that Whisper Small executes with $\approx 11.4\times$ lower inference latency (9.51s vs. 108.52s on a 4-second utterance). This establishes Whisper Small as a viable candidate for edge or low-latency conversational deployment, whereas Whisper Medium serves as the optimal high-fidelity engine for offline archival and media transcription.
 \end{itemize}
 
+\FloatBarrier
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
 
@@ -364,6 +367,7 @@ In this work, we presented an efficient methodology for adapting foundation spee
 
 Future work will explore scaling to Whisper Large-v3 architectures, cross-dialectal transfer across Maghrebi varieties (Moroccan and Tunisian Darija), exploring direct speech-to-speech translation, and integration with end-to-end dialectal conversational agents such as Dziri Voicebot \cite{lanasri2026dzirivoicebot}.
 
+\FloatBarrier
 \bibliographystyle{IEEEtran}
 \bibliography{references}
 
