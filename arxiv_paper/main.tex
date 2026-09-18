@@ -5,7 +5,11 @@
 \usepackage{fontspec}
 \usepackage[bidi=default,english]{babel}
 \babelprovide[import,onchar=fonts ids]{arabic}
-\babelfont[arabic]{rm}{Amiri}
+\babelfont[arabic]{rm}[
+    UprightFont = Amiri-Regular.ttf,
+    BoldFont    = Amiri-Bold.ttf,
+    ItalicFont  = Amiri-Italic.ttf
+]{Amiri-Regular.ttf}
 \providecommand{\textarabic}[1]{\foreignlanguage{arabic}{#1}}
 
 \usepackage[margin=2.5cm]{geometry}
