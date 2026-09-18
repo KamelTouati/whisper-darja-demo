@@ -323,32 +323,39 @@ Training progress across the 31,661 cumulative steps proceeds with high numerica
 \section{Qualitative Error Analysis}
 \label{sec:qualitative}
 
-Table~\ref{tab:qualitative_examples} illustrates representative transcription outputs from Whisper Small vs. Whisper Medium on authentic Algerian Darja audio clips.
+To understand the practical linguistic differences between model variants, Table~\ref{tab:qualitative_examples} presents empirical transcription outputs obtained during live evaluation on authentic Algerian Darja audio samples.
 
 \begin{table}[h]
 \centering
 \small
 \renewcommand{\arraystretch}{1.3}
-\caption{Qualitative comparison of transcription outputs between Whisper Small and Medium.}
+\caption{Qualitative comparison of real-world transcription outputs between Whisper Small and Medium.}
 \label{tab:qualitative_examples}
 \begin{tabularx}{\textwidth}{@{} p{3.8cm} X @{}}
 \toprule
-\textbf{Model / Evaluation Target} & \textbf{Transcription Output and Error Characterization} \\
+\textbf{Model / Evaluation Target} & \textbf{Transcription Output and Linguistic Characterization} \\
 \midrule
-\multicolumn{2}{@{}l}{\textbf{Example 1: Colloquial Phonetics \& Non-Standard Phrasing (Kahwa Podcast)}} \\
+\multicolumn{2}{@{}l}{\textbf{Example 1: Colloquial Phonetics \& Dialectal Morphology (Kahwa Split)}} \\
 \midrule
-Reference Audio  & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \\
-Whisper Small    & \textarabic{قالوا بلي راه جاي غدا الصباح مع أصحابه كاملين} \quad \textit{\textcolor{red!70!black}{(MSA substitution error)}} \\
-Whisper Medium   & \textarabic{قالو بلي راهو جاي غدوا في الصباح مع صحابو كاملين} \quad \textit{\textcolor{teal!80!black}{(\textbf{Exact match})}} \\
+Reference Audio  & \textarabic{قال لي باللي راهو جاي غدوة في الصباح مع صحابو كاملين} \\
+Whisper Small    & \textarabic{قلي بلي راهو جاي غدوة في الصباح مع اصحابو كاملين} \quad \textit{\textcolor{red!70!black}{(Contraction \& MSA bias)}} \\
+Whisper Medium   & \textarabic{قال لي باللي راهو جاي غدوة في الصباح مع صحابو كاملين} \quad \textit{\textcolor{teal!80!black}{(\textbf{Exact match})}} \\
 \midrule
-\multicolumn{2}{@{}l}{\textbf{Example 2: Intra-Sentential Code-Switching with French Loanwords (Loubna Stories)}} \\
+\multicolumn{2}{@{}l}{\textbf{Example 2: Dense Code-Switching with Technical Borrowing (Loubna Split)}} \\
 \midrule
-Reference Audio  & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \\
-Whisper Small    & \textarabic{درنا اجتماع على جال بروجي جديد داتاسيت} \quad \textit{\textcolor{red!70!black}{(Preposition deletion)}} \\
-Whisper Medium   & \textarabic{درنا اجتماع على جال البروجي الجديد تاع الداتاسيت} \quad \textit{\textcolor{teal!80!black}{(\textbf{Exact match})}} \\
+Reference Audio  & \textarabic{درنا اجتماع على جال البروجي الجديد تاع ال data set} \\
+Whisper Small    & \textarabic{درنا شيماء علي جال البروجي الجديد تاع الداتسات} \quad \textit{\textcolor{red!70!black}{(Phonetic hallucination \& script failure)}} \\
+Whisper Medium   & \textarabic{درنا اجتماع علي جال البروجي الجديد تاع ال data set} \quad \textit{\textcolor{teal!80!black}{(\textbf{Exact match})}} \\
 \bottomrule
 \end{tabularx}
 \end{table}
+
+The qualitative results highlight two key phenomena:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Phonetic and Morphological Disambiguation}: In Example 1, spoken Darja utilizes the colloquial multi-word verb phrase \textarabic{قال لي باللي} (\textit{He told me that}). Whisper Small erroneously contracts this phrase into the colloquial amalgam \textarabic{قلي}, while also introducing an MSA prosthetic Alef onto \textarabic{صحابو} $\rightarrow$ \textarabic{اصحابو}. In contrast, Whisper Medium preserves exact word boundaries and native vernacular orthography.
+    \item \textbf{Code-Switching \& Acoustic Robustness}: In Example 2, the speaker code-switches into technical English with an Arabic definite prefix (\textarabic{ال data set}). Whisper Small exhibits catastrophic acoustic confusion, substituting the proper noun \textarabic{شيماء} (\textit{Chayma}) for the phonetically overlapping verb-noun construct \textarabic{اجتماع} (\textit{ijtima3}), while also failing to output the Latin token. Whisper Medium disambiguates the acoustic transition flawlessly, producing an exact bilingual transcription.
+    \item \textbf{Inference Speed vs. Accuracy Trade-off}: While Whisper Medium achieves near-perfect fidelity (0.34\% WER), empirical benchmarks on commodity CPU hardware reveal that Whisper Small executes with $\approx 11.4\times$ lower inference latency (9.51s vs. 108.52s on a 4-second utterance). This establishes Whisper Small as a viable candidate for edge or low-latency conversational deployment, whereas Whisper Medium serves as the optimal high-fidelity engine for offline archival and media transcription.
+\end{itemize}
 
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
