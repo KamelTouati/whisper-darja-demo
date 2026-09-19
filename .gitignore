@@ -11,14 +11,18 @@ __pycache__/
 *.flac
 temp_audio.*
 
-# Training artifacts / logs
-train_sequential.py
-logs
+# Training artifacts / checkpoints / caches
 logs/
 checkpoint-*/
 runs/
 wandb/
 .cache/
+kaggle_tmp/
+kaggle_working/
+f5_dataset_darja/
+f5tts_checkpoints/
+ckpts_f5tts/
+*.arrow
 
 # Environments
 .env

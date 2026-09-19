@@ -1,10 +1,21 @@
-streamlit>=1.32.0
+# Core & Streamlit App
+streamlit>=1.30.0
 streamlit-mic-recorder>=0.0.8
-torch>=2.1.0
-torchaudio
-transformers>=4.38.0
-peft>=0.9.0
+torch>=2.0.0
+torchaudio>=2.0.0
+soundfile>=0.12.1
 librosa>=0.10.0
-soundfile>=0.12.0
-pydub>=0.25.1
-numpy
+numpy<2.1.0
+scipy
+
+# ASR (Whisper)
+transformers>=4.40.0
+datasets>=2.14.0
+peft>=0.10.0
+accelerate>=0.30.0
+jiwer>=3.0.0
+
+# Tracking & Utilities
+huggingface_hub>=0.20.0
+wandb>=0.16.0
+tqdm>=4.65.0
