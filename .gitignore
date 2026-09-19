@@ -24,6 +24,9 @@ f5tts_checkpoints/
 ckpts_f5tts/
 *.arrow
 
+# Separate projects kept locally (untracked in this repo)
+tts/
+
 # Environments
 .env
 .venv
